@@ -1,24 +1,26 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 function AnalyzeContent() {
   const searchParams = useSearchParams();
 
-  const [transactionId, setTransactionId] = useState("");
-  const [amount, setAmount] = useState("");
+  const searchId = searchParams.get("id") ?? "";
+  const searchAmount = searchParams.get("amount") ?? "";
+
+  const [transactionId, setTransactionId] = useState(searchId);
+  const [amount, setAmount] = useState(searchAmount);
   const [result, setResult] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [prevParams, setPrevParams] = useState({ id: searchId, amount: searchAmount });
 
-  useEffect(() => {
-    const id = searchParams.get("id");
-    const transactionAmount = searchParams.get("amount");
-
-    if (id) setTransactionId(id);
-    if (transactionAmount) setAmount(transactionAmount);
-  }, [searchParams]);
+  if (searchId !== prevParams.id || searchAmount !== prevParams.amount) {
+    setPrevParams({ id: searchId, amount: searchAmount });
+    if (searchId) setTransactionId(searchId);
+    if (searchAmount) setAmount(searchAmount);
+  }
 
   const analyze = () => {
     if (!transactionId || !amount) return;
