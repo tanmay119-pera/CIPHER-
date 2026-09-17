@@ -8,7 +8,7 @@ export default function SplashPage() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const duration = 10000;
+    const duration = 3500;
     const intervalTime = 50;
     const increment = 100 / (duration / intervalTime);
 

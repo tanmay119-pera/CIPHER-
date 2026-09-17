@@ -1,39 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const transactions = [
-  {
-    id: "Axfy13Hk4p1",
-    amount: "259.14",
-    type: "credit_card",
-    score: 18,
-    status: "Low Risk",
-  },
-  {
-    id: "v6px92Os8cLG",
-    amount: "382.39",
-    type: "credit_card",
-    score: 34,
-    status: "Medium Risk",
-  },
-  {
-    id: "VjTVGzqe8U6R",
-    amount: "1014.75",
-    type: "credit_card",
-    score: 82,
-    status: "High Risk",
-  },
-  {
-    id: "DzNM8wrcMGFH",
-    amount: "1521.75",
-    type: "wallet",
-    score: 91,
-    status: "High Risk",
-  },
-];
+import { fetchStats, fetchTransactions, Transaction, StatsResponse } from "@/lib/api";
 
 export default function Home() {
+  const [stats, setStats] = useState<StatsResponse>({
+    total_transactions: 89316,
+    high_risk: 7145,
+    medium_risk: 21436,
+    low_risk: 60735,
+    average_risk_score: 35.3,
+    percentages: { low: 68, medium: 24, high: 8 }
+  });
+
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([
+    { id: "Axfy13Hk4PIk", amount: 259.14, type: "Credit Card", score: 9, status: "Low Risk", date: "22 Oct 2017, 18:57" },
+    { id: "v6px92oS8cLG", amount: 382.39, type: "Credit Card", score: 46, status: "Medium Risk", date: "20 Jun 2018, 21:40" },
+    { id: "VjTVGzqe8U6R", amount: 1014.75, type: "Credit Card", score: 51, status: "Medium Risk", date: "01 Sep 2017, 14:38" },
+    { id: "DzNM8wrcMGFH", amount: 1521.75, type: "Wallet", score: 93, status: "High Risk", date: "24 Nov 2017, 19:12" },
+  ]);
+
+  useEffect(() => {
+    fetchStats().then(setStats).catch(() => {});
+    fetchTransactions(1, 5).then((data) => {
+      if (data?.transactions?.length) {
+        setRecentTransactions(data.transactions);
+      }
+    }).catch(() => {});
+  }, []);
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
 
@@ -47,7 +43,7 @@ export default function Home() {
         </div>
 
         <div className="flex gap-7 text-sm">
-          <Link href="/" className="text-white font-medium">
+          <Link href="/dashboard" className="text-white font-medium">
             Dashboard
           </Link>
 
@@ -82,22 +78,30 @@ export default function Home() {
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <p className="text-slate-400 text-sm">Total Transactions</p>
-            <p className="text-3xl font-bold mt-3">99,441</p>
+            <p className="text-3xl font-bold mt-3">
+              {stats.total_transactions.toLocaleString()}
+            </p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <p className="text-slate-400 text-sm">High Risk</p>
-            <p className="text-3xl font-bold mt-3">4,823</p>
+            <p className="text-3xl font-bold mt-3 text-red-400">
+              {stats.high_risk.toLocaleString()}
+            </p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <p className="text-slate-400 text-sm">Medium Risk</p>
-            <p className="text-3xl font-bold mt-3">12,641</p>
+            <p className="text-3xl font-bold mt-3 text-yellow-400">
+              {stats.medium_risk.toLocaleString()}
+            </p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <p className="text-slate-400 text-sm">Average Risk Score</p>
-            <p className="text-3xl font-bold mt-3">32.6</p>
+            <p className="text-3xl font-bold mt-3">
+              {stats.average_risk_score}
+            </p>
           </div>
 
         </div>
@@ -117,33 +121,42 @@ export default function Home() {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Low Risk</span>
-                  <span className="text-slate-400">68%</span>
+                  <span className="text-slate-400">{stats.percentages.low}%</span>
                 </div>
 
                 <div className="h-3 bg-slate-800 rounded-full">
-                  <div className="h-3 bg-green-500 rounded-full w-[68%]" />
+                  <div 
+                    className="h-3 bg-green-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.percentages.low}%` }} 
+                  />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Medium Risk</span>
-                  <span className="text-slate-400">24%</span>
+                  <span className="text-slate-400">{stats.percentages.medium}%</span>
                 </div>
 
                 <div className="h-3 bg-slate-800 rounded-full">
-                  <div className="h-3 bg-yellow-500 rounded-full w-[24%]" />
+                  <div 
+                    className="h-3 bg-yellow-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.percentages.medium}%` }} 
+                  />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>High Risk</span>
-                  <span className="text-slate-400">8%</span>
+                  <span className="text-slate-400">{stats.percentages.high}%</span>
                 </div>
 
                 <div className="h-3 bg-slate-800 rounded-full">
-                  <div className="h-3 bg-red-500 rounded-full w-[8%]" />
+                  <div 
+                    className="h-3 bg-red-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.percentages.high}%` }} 
+                  />
                 </div>
               </div>
 
@@ -151,7 +164,7 @@ export default function Home() {
 
             <Link
               href="/analytics"
-              className="block text-center mt-8 py-3 rounded-lg bg-slate-800 hover:bg-slate-700"
+              className="block text-center mt-8 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
             >
               View Analytics
             </Link>
@@ -170,7 +183,7 @@ export default function Home() {
                 href="/transactions"
                 className="text-sm text-indigo-400 hover:text-indigo-300"
               >
-                View All
+                View All →
               </Link>
             </div>
 
@@ -184,23 +197,24 @@ export default function Home() {
                     <th className="text-left py-3">Amount</th>
                     <th className="text-left py-3">Payment</th>
                     <th className="text-left py-3">Risk</th>
+                    <th className="text-right py-3">Action</th>
                   </tr>
                 </thead>
 
                 <tbody>
 
-                  {transactions.map((tx) => (
+                  {recentTransactions.map((tx) => (
                     <tr
                       key={tx.id}
-                      className="border-b border-slate-800/60"
+                      className="border-b border-slate-800/60 hover:bg-slate-800/30 transition"
                     >
 
-                      <td className="py-4">
+                      <td className="py-4 font-mono font-medium text-xs md:text-sm">
                         {tx.id}
                       </td>
 
-                      <td className="py-4">
-                        ${tx.amount}
+                      <td className="py-4 font-semibold">
+                        ${typeof tx.amount === "number" ? tx.amount.toFixed(2) : tx.amount}
                       </td>
 
                       <td className="py-4 text-slate-400">
@@ -209,16 +223,25 @@ export default function Home() {
 
                       <td className="py-4">
                         <span
-                          className={
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                             tx.score >= 70
-                              ? "text-red-400"
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
                               : tx.score >= 40
-                              ? "text-yellow-400"
-                              : "text-green-400"
-                          }
+                              ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                              : "bg-green-500/10 text-green-400 border border-green-500/20"
+                          }`}
                         >
-                          {tx.status}
+                          {tx.status} ({tx.score})
                         </span>
+                      </td>
+
+                      <td className="py-4 text-right">
+                        <Link
+                          href={`/analyze?id=${tx.id}&amount=${tx.amount}`}
+                          className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold"
+                        >
+                          Analyze →
+                        </Link>
                       </td>
 
                     </tr>
@@ -235,23 +258,23 @@ export default function Home() {
         </div>
 
         {/* ANALYZE BUTTON */}
-        <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex justify-between items-center">
+        <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
 
           <div>
             <h3 className="text-lg font-semibold">
-              Analyze a Transaction
+              Analyze a Transaction with AI Teammates
             </h3>
 
             <p className="text-sm text-slate-400 mt-1">
-              Use AI to detect unusual transaction behavior.
+              Deploy Customer, Product, Decision, and Critic agents to autonomously review anomalies.
             </p>
           </div>
 
           <Link
             href="/analyze"
-            className="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold"
+            className="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-semibold transition"
           >
-            Analyze Transaction
+            Launch Swarm Analysis →
           </Link>
 
         </div>
