@@ -11,10 +11,15 @@ function AnalyzeContent() {
   const searchId = searchParams.get("id") ?? "";
   const searchAmount = searchParams.get("amount") ?? "";
 
-  const [transactionId, setTransactionId] = useState(searchId || "DzNM8wrcMGFH");
+  const [transactionId, setTransactionId] = useState(
+    searchId || "DzNM8wrcMGFH"
+  );
   const [amount, setAmount] = useState(searchAmount || "1521.75");
   const [paymentType, setPaymentType] = useState("wallet");
-  const [activeTab, setActiveTab] = useState<"overview" | "swarm" | "policies">("overview");
+
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "swarm" | "policies"
+  >("overview");
 
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,9 +38,12 @@ function AnalyzeContent() {
         amount: amount ? parseFloat(amount) : undefined,
         payment_type: paymentType,
       });
+
       setResult(res);
     } catch (err: any) {
-      setError(err?.message || "Failed to complete multi-agent analysis.");
+      setError(
+        err?.message || "Failed to complete multi-agent analysis."
+      );
     } finally {
       setLoading(false);
     }
@@ -46,6 +54,7 @@ function AnalyzeContent() {
     setAmount(amt);
     setPaymentType(pType);
     setResult(null);
+    setError(null);
   };
 
   const resetAnalysis = () => {
@@ -55,236 +64,486 @@ function AnalyzeContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#f7f3ec] text-[#241d2d]">
 
+      {/* ========================================================= */}
+      {/* ANIMATED BACKGROUND */}
+      {/* ========================================================= */}
+
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+
+        {/* grid */}
+        <div
+          className="absolute inset-0 opacity-[0.45]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(36,29,45,0.055) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(36,29,45,0.055) 1px, transparent 1px)
+            `,
+            backgroundSize: "43px 43px",
+          }}
+        />
+
+        {/* pink bubble */}
+        <div className="bubble bubble-pink" />
+
+        {/* purple bubble */}
+        <div className="bubble bubble-purple" />
+
+        {/* cyan bubble */}
+        <div className="bubble bubble-cyan" />
+
+        {/* small floating dots */}
+        <div className="floating-dot dot-purple" />
+        <div className="floating-dot dot-cyan" />
+        <div className="floating-dot dot-pink" />
+
+        {/* soft glows */}
+        <div className="absolute -left-32 top-40 h-80 w-80 rounded-full bg-pink-200/20 blur-3xl" />
+        <div className="absolute -right-32 top-[500px] h-96 w-96 rounded-full bg-cyan-200/20 blur-3xl" />
+      </div>
+
+
+      {/* ========================================================= */}
       {/* NAVBAR */}
-      <nav className="border-b border-slate-800 px-8 py-5 flex justify-between items-center">
-        <div>
-          <Link href="/dashboard" className="text-2xl font-bold">
-            CIPHER
-          </Link>
-          <p className="text-xs text-slate-400">
-            Autonomous AI Teammates Architecture
-          </p>
-        </div>
+      {/* ========================================================= */}
 
-        <div className="flex gap-6 text-sm text-slate-300">
-          <Link href="/dashboard" className="hover:text-white">
-            Dashboard
+      <nav className="relative z-20 border-b border-[#ded8d0] bg-[#f7f3ec]/90 backdrop-blur-md">
+        <div className="mx-auto flex min-h-[90px] max-w-[1450px] items-center justify-between px-6 py-4 lg:px-10">
+
+          {/* LOGO */}
+          <Link href="/dashboard" className="flex items-center gap-3">
+
+            {/* EXACT CIPHER LOGO STYLE */}
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] border border-[#eadcf0] bg-white shadow-[0_8px_22px_rgba(126,74,143,0.12)]">
+              <span className="text-[31px] font-black leading-none tracking-[-4px] text-[#292130]">
+                C
+              </span>
+
+              {/* cyan dot */}
+              <span className="absolute right-[7px] top-[8px] h-3 w-3 rounded-full bg-[#13b9d5]" />
+
+              {/* pink dot */}
+              <span className="absolute bottom-[8px] right-[10px] h-[6px] w-[6px] rounded-full bg-[#e94b9b]" />
+            </div>
+
+            <div>
+              <div className="text-[21px] font-black tracking-[0.18em] text-[#241d2d]">
+                CIPHER
+              </div>
+              <div className="mt-[-2px] text-[9px] font-bold tracking-[0.19em] text-[#81768a]">
+                AI TRANSACTION INTELLIGENCE
+              </div>
+            </div>
           </Link>
-          <Link href="/transactions" className="hover:text-white">
-            Transactions
-          </Link>
-          <Link href="/analytics" className="hover:text-white">
-            Analytics
-          </Link>
+
+
+          {/* NAV LINKS */}
+          <div className="hidden items-center gap-8 text-[15px] font-medium md:flex">
+            <Link
+              href="/dashboard"
+              className="text-[#70677b] transition hover:text-[#241d2d]"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/transactions"
+              className="text-[#70677b] transition hover:text-[#241d2d]"
+            >
+              Transactions
+            </Link>
+
+            <Link
+              href="/analytics"
+              className="text-[#70677b] transition hover:text-[#241d2d]"
+            >
+              Analytics
+            </Link>
+
+            <span className="font-bold text-[#6551e8]">
+              Analyze
+            </span>
+          </div>
+
+
+          {/* MOBILE NAV */}
+          <div className="flex gap-3 md:hidden">
+            <Link
+              href="/analytics"
+              className="rounded-lg border border-[#ddd5de] bg-white px-3 py-2 text-xs font-semibold"
+            >
+              Analytics
+            </Link>
+          </div>
+
         </div>
       </nav>
 
-      {/* PAGE */}
-      <section className="max-w-7xl mx-auto p-8">
+
+      {/* ========================================================= */}
+      {/* PAGE CONTENT */}
+      {/* ========================================================= */}
+
+      <section className="relative z-10 mx-auto w-full max-w-[1450px] px-5 py-8 lg:px-10 lg:py-10">
 
         {/* HEADER */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
-            Autonomous Multi-Agent Swarm
-          </div>
-          <h2 className="text-3xl font-bold">
-            Analyze Transaction with AI Teammates
-          </h2>
-          <p className="text-slate-400 mt-2">
-            Experience 5-step zero-handoff autonomous decisioning: RAG ➔ ML ➔ Customer &amp; Sales Agents ➔ Decision ➔ Critic ➔ Tool Execution.
-          </p>
-        </div>
+        <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
 
-        {/* MAIN GRID */}
-        <div className="grid lg:grid-cols-3 gap-6">
+          <div>
 
-          {/* LEFT INPUT CARD */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 h-fit">
-
-            <h3 className="text-xl font-semibold mb-4">
-              Transaction Inputs
-            </h3>
-
-            {/* QUICK PRESETS */}
-            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">
-              Quick Test Presets
-            </p>
-            <div className="flex flex-col gap-2 mb-6">
-              <button
-                type="button"
-                onClick={() => loadSample("DzNM8wrcMGFH", "1521.75", "wallet")}
-                className="text-left text-xs p-2.5 rounded-lg border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-300 transition"
-              >
-                🔴 High Risk Wallet ($1,521.75)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => loadSample("v6px92oS8cLG", "382.39", "credit_card")}
-                className="text-left text-xs p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10 text-yellow-300 transition"
-              >
-                🟡 Medium Risk Installments ($382.39)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => loadSample("Axfy13Hk4PIk", "259.14", "credit_card")}
-                className="text-left text-xs p-2.5 rounded-lg border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 text-green-300 transition"
-              >
-                🟢 Low Risk Clean Order ($259.14)
-              </button>
+            <div className="mb-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#008da8]">
+              <span className="h-2 w-2 rounded-full bg-[#0da9c4]" />
+              Autonomous Multi-Agent Swarm
             </div>
 
-            {/* TRANSACTION ID */}
-            <label className="text-sm text-slate-400">
-              Transaction / Order ID
-            </label>
-            <input
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="Enter transaction ID from dataset"
-              className="w-full mt-2 mb-4 p-3 rounded-lg bg-slate-800 border border-slate-700 outline-none focus:border-indigo-500 font-mono text-sm"
-            />
+            <h1 className="max-w-4xl text-4xl font-black tracking-[-0.035em] text-[#241d2d] md:text-5xl">
+              Analyze Transaction{" "}
+              <span className="text-[#6551e8]">
+                with AI Teammates
+              </span>
+            </h1>
 
-            {/* AMOUNT */}
-            <label className="text-sm text-slate-400">
-              Amount ($ USD)
-            </label>
-            <input
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-              type="number"
-              className="w-full mt-2 mb-4 p-3 rounded-lg bg-slate-800 border border-slate-700 outline-none focus:border-indigo-500 text-sm"
-            />
-
-            {/* PAYMENT TYPE */}
-            <label className="text-sm text-slate-400">
-              Payment Method
-            </label>
-            <select
-              value={paymentType}
-              onChange={(e) => setPaymentType(e.target.value)}
-              className="w-full mt-2 mb-6 p-3 rounded-lg bg-slate-800 border border-slate-700 outline-none focus:border-indigo-500 text-sm"
-            >
-              <option value="credit_card">Credit Card</option>
-              <option value="wallet">Digital Wallet</option>
-              <option value="boleto">Boleto</option>
-              <option value="voucher">Voucher</option>
-            </select>
-
-            {/* ANALYZE BUTTON */}
-            <button
-              onClick={analyze}
-              disabled={(!transactionId && !amount) || loading}
-              className="w-full py-3.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 font-semibold transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Running AI Swarm...
-                </>
-              ) : (
-                "Deploy AI Teammates Swarm 🚀"
-              )}
-            </button>
-
-            {/* RESET */}
-            {result && (
-              <button
-                onClick={resetAnalysis}
-                className="w-full mt-3 py-2.5 rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 transition text-sm"
-              >
-                Reset Analysis
-              </button>
-            )}
-
-            {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
-                {error}
-              </div>
-            )}
+            <p className="mt-3 max-w-4xl text-[15px] leading-7 text-[#71687b]">
+              Experience autonomous transaction decisioning through RAG
+              retrieval, ML anomaly detection, specialized AI teammates,
+              decision synthesis, Critic verification and deterministic
+              tool execution.
+            </p>
 
           </div>
 
-          {/* RIGHT RESULT AREA */}
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 min-h-[500px]">
+        </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-800 pb-4">
+
+        {/* ========================================================= */}
+        {/* MAIN GRID */}
+        {/* ========================================================= */}
+
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+
+
+          {/* ======================================================= */}
+          {/* LEFT INPUT PANEL */}
+          {/* ======================================================= */}
+
+          <div className="relative h-fit min-w-0 overflow-hidden rounded-[22px] border border-[#ded7df] bg-white/90 p-6 shadow-[0_12px_35px_rgba(46,35,53,0.07)] backdrop-blur">
+
+            {/* little decorative bubble */}
+            <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full border border-purple-200/40 bg-purple-100/20" />
+
+            <div className="relative">
+
+              <div className="mb-5">
+                <h2 className="text-xl font-black text-[#292232]">
+                  Transaction Inputs
+                </h2>
+                <p className="mt-1 text-xs text-[#93899a]">
+                  Configure the transaction to analyze
+                </p>
+              </div>
+
+
+              {/* QUICK PRESETS */}
+              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.17em] text-[#8e8496]">
+                Quick Test Presets
+              </p>
+
+              <div className="mb-6 flex flex-col gap-3">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadSample(
+                      "DzNM8wrcMGFH",
+                      "1521.75",
+                      "wallet"
+                    )
+                  }
+                  className="rounded-[15px] border border-[#ffb9bd] bg-[#fff5f4] p-3.5 text-left transition hover:-translate-y-[1px] hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#f05b62]">
+                    <span className="h-3 w-3 rounded-full bg-[#f05b62]" />
+                    High Risk Wallet
+                  </div>
+                  <div className="mt-1 text-xs text-[#ef7479]">
+                    $1,521.75
+                  </div>
+                </button>
+
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadSample(
+                      "v6px92oS8cLG",
+                      "382.39",
+                      "credit_card"
+                    )
+                  }
+                  className="rounded-[15px] border border-[#f3d68e] bg-[#fffaf0] p-3.5 text-left transition hover:-translate-y-[1px] hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#e5a900]">
+                    <span className="h-3 w-3 rounded-full bg-[#eab21b]" />
+                    Medium Risk Installments
+                  </div>
+                  <div className="mt-1 text-xs text-[#d9a829]">
+                    $382.39
+                  </div>
+                </button>
+
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadSample(
+                      "Axfy13Hk4PIk",
+                      "259.14",
+                      "credit_card"
+                    )
+                  }
+                  className="rounded-[15px] border border-[#a9e6c7] bg-[#f1fcf6] p-3.5 text-left transition hover:-translate-y-[1px] hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#0ca95b]">
+                    <span className="h-3 w-3 rounded-full bg-[#16bf6d]" />
+                    Low Risk Clean Order
+                  </div>
+                  <div className="mt-1 text-xs text-[#13a65c]">
+                    $259.14
+                  </div>
+                </button>
+
+              </div>
+
+
+              {/* TRANSACTION ID */}
+              <label className="text-xs font-bold text-[#756b80]">
+                Transaction / Order ID
+              </label>
+
+              <input
+                value={transactionId}
+                onChange={(e) =>
+                  setTransactionId(e.target.value)
+                }
+                placeholder="Enter transaction ID from dataset"
+                className="mt-2 mb-4 w-full rounded-[13px] border border-[#ddd7df] bg-[#fcfafc] p-3.5 font-mono text-sm text-[#302938] outline-none transition focus:border-[#7461e8] focus:ring-2 focus:ring-[#7461e8]/10"
+              />
+
+
+              {/* AMOUNT */}
+              <label className="text-xs font-bold text-[#756b80]">
+                Amount ($ USD)
+              </label>
+
+              <input
+                value={amount}
+                onChange={(e) =>
+                  setAmount(e.target.value)
+                }
+                placeholder="Enter amount"
+                type="number"
+                className="mt-2 mb-4 w-full rounded-[13px] border border-[#ddd7df] bg-[#fcfafc] p-3.5 text-sm text-[#302938] outline-none transition focus:border-[#7461e8] focus:ring-2 focus:ring-[#7461e8]/10"
+              />
+
+
+              {/* PAYMENT TYPE */}
+              <label className="text-xs font-bold text-[#756b80]">
+                Payment Method
+              </label>
+
+              <select
+                value={paymentType}
+                onChange={(e) =>
+                  setPaymentType(e.target.value)
+                }
+                className="mt-2 mb-6 w-full rounded-[13px] border border-[#ddd7df] bg-[#fcfafc] p-3.5 text-sm text-[#302938] outline-none transition focus:border-[#7461e8] focus:ring-2 focus:ring-[#7461e8]/10"
+              >
+                <option value="credit_card">
+                  Credit Card
+                </option>
+                <option value="wallet">
+                  Digital Wallet
+                </option>
+                <option value="boleto">
+                  Boleto
+                </option>
+                <option value="voucher">
+                  Voucher
+                </option>
+              </select>
+
+
+              {/* ANALYZE */}
+              <button
+                onClick={analyze}
+                disabled={(!transactionId && !amount) || loading}
+                className="flex w-full items-center justify-center gap-2 rounded-[13px] bg-[#281f2f] py-3.5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(40,31,47,0.18)] transition hover:-translate-y-[1px] hover:bg-[#33283d] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Running AI Swarm...
+                  </>
+                ) : (
+                  <>
+                    Deploy AI Teammates Swarm 🚀
+                  </>
+                )}
+              </button>
+
+
+              {/* RESET */}
+              {result && (
+                <button
+                  onClick={resetAnalysis}
+                  className="mt-3 w-full rounded-[13px] border border-[#ded7df] bg-white py-3 text-sm font-semibold text-[#81778b] transition hover:bg-[#f8f5f8]"
+                >
+                  Reset Analysis
+                </button>
+              )}
+
+
+              {/* ERROR */}
+              {error && (
+                <div className="mt-4 rounded-[13px] border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-500">
+                  {error}
+                </div>
+              )}
+
+            </div>
+          </div>
+
+
+          {/* ======================================================= */}
+          {/* RIGHT RESULT PANEL */}
+          {/* ======================================================= */}
+
+          <div className="min-w-0 rounded-[22px] border border-[#ded7df] bg-white/90 p-5 shadow-[0_12px_35px_rgba(46,35,53,0.07)] backdrop-blur md:p-6">
+
+            {/* RESULT HEADER */}
+            <div className="mb-6 flex flex-col gap-4 border-b border-[#e7e1e7] pb-5 sm:flex-row sm:items-center sm:justify-between">
+
               <div>
-                <h3 className="text-xl font-semibold">
+                <h2 className="text-xl font-black text-[#292232]">
                   Swarm Execution &amp; Risk Intelligence
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
+                </h2>
+
+                <p className="mt-1 text-xs text-[#918798]">
                   Multi-agent audit with automated Critic review
                 </p>
               </div>
 
+
               {result && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                <div className="flex flex-wrap items-center gap-2">
+
+                  <span className="rounded-full border border-[#ddd5f8] bg-[#f5f2ff] px-3 py-1.5 font-mono text-xs font-semibold text-[#6955dd]">
                     ⚡ {result.total_latency_ms} ms
                   </span>
+
                   <span
-                    className={`text-xs px-3 py-1 rounded-full font-medium border ${
+                    className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
                       result.risk_score >= 70
-                        ? "bg-red-500/10 text-red-400 border-red-500/20"
+                        ? "border-red-200 bg-red-50 text-red-500"
                         : result.risk_score >= 40
-                        ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                        : "bg-green-500/10 text-green-400 border-green-500/20"
+                        ? "border-yellow-200 bg-yellow-50 text-yellow-600"
+                        : "border-green-200 bg-green-50 text-green-600"
                     }`}
                   >
                     {result.risk_status} ({result.risk_score}/100)
                   </span>
+
                 </div>
               )}
+
             </div>
 
+
+            {/* ===================================================== */}
             {/* EMPTY STATE */}
+            {/* ===================================================== */}
+
             {!result && !loading && (
-              <div className="h-96 flex flex-col items-center justify-center text-center px-4">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mb-4 text-3xl">
-                  🤖
+              <div className="flex min-h-[520px] flex-col items-center justify-center px-5 py-10 text-center">
+
+                <div className="relative mb-6">
+
+                  <div className="absolute inset-0 animate-pulse rounded-full bg-purple-200/40 blur-2xl" />
+
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-[24px] border border-[#ddd4fa] bg-[#f5f1ff] text-4xl shadow-sm">
+                    🤖
+                  </div>
+
                 </div>
-                <p className="text-lg font-semibold text-slate-200">
+
+                <p className="text-xl font-black text-[#292232]">
                   Ready to Deploy Autonomous Teammates
                 </p>
-                <p className="text-slate-400 text-sm mt-1 max-w-md">
-                  Select a test preset or enter any transaction details on the left, then click &quot;Deploy AI Teammates Swarm&quot;.
+
+                <p className="mt-2 max-w-lg text-sm leading-6 text-[#81778b]">
+                  Select a test preset or enter transaction details
+                  on the left, then deploy the AI teammate swarm.
                 </p>
-                <p className="text-xs text-slate-500 mt-4">
-                  The Swarm will run RAG retrieval, ML anomaly scoring, Customer profiling, Product risk, ReAct decisioning, Critic verification, and execute deterministic tools.
+
+                <p className="mt-5 max-w-xl text-xs leading-5 text-[#a098a7]">
+                  The Swarm will run RAG retrieval, ML anomaly
+                  scoring, Customer profiling, Product risk,
+                  decision synthesis, Critic verification, and
+                  deterministic tool execution.
                 </p>
+
               </div>
             )}
 
+
+            {/* ===================================================== */}
             {/* LOADING STATE */}
+            {/* ===================================================== */}
+
             {loading && (
-              <div className="h-96 flex flex-col items-center justify-center text-center">
-                <div className="w-14 h-14 border-4 border-slate-700 border-t-indigo-500 rounded-full animate-spin mb-6" />
-                <p className="text-lg font-semibold">
+              <div className="flex min-h-[520px] flex-col items-center justify-center px-5 text-center">
+
+                <div className="relative mb-7">
+
+                  <div className="absolute inset-0 animate-ping rounded-full bg-purple-200/30" />
+
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-[24px] border border-[#ddd4fa] bg-[#f5f1ff]">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#ddd8e3] border-t-[#6955e8]" />
+                  </div>
+
+                </div>
+
+                <p className="text-xl font-black text-[#292232]">
                   Autonomous Teammates in Session...
                 </p>
-                <p className="text-xs text-indigo-400 font-mono mt-2 animate-pulse">
-                  Analyzing RAG Policies ➔ Profiling Customer ➔ Auditing Logistics ➔ Synthesizing Decision ➔ Critic Reviewing
+
+                <p className="mt-3 max-w-xl text-xs font-mono leading-6 text-[#7161d9]">
+                  Analyzing RAG Policies ➔ Profiling Customer ➔
+                  Auditing Logistics ➔ Synthesizing Decision ➔
+                  Critic Reviewing
                 </p>
+
               </div>
             )}
 
-            {/* RESULT VIEW */}
-            {result && (
-              <div className="space-y-6">
 
-                {/* TAB SWITCHER */}
-                <div className="flex border-b border-slate-800 text-sm font-medium gap-6">
+            {/* ===================================================== */}
+            {/* RESULT */}
+            {/* ===================================================== */}
+
+            {result && (
+              <div className="min-w-0 space-y-6">
+
+                {/* TABS */}
+                <div className="flex gap-5 overflow-x-auto border-b border-[#e7e1e7] text-sm font-bold">
+
                   <button
                     onClick={() => setActiveTab("overview")}
-                    className={`pb-3 transition border-b-2 ${
+                    className={`shrink-0 border-b-2 pb-3 transition ${
                       activeTab === "overview"
-                        ? "border-indigo-500 text-white"
-                        : "border-transparent text-slate-400 hover:text-slate-200"
+                        ? "border-[#6955e8] text-[#292232]"
+                        : "border-transparent text-[#918798] hover:text-[#4c4352]"
                     }`}
                   >
                     Summary &amp; Action
@@ -292,270 +551,485 @@ function AnalyzeContent() {
 
                   <button
                     onClick={() => setActiveTab("swarm")}
-                    className={`pb-3 transition border-b-2 flex items-center gap-2 ${
+                    className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 transition ${
                       activeTab === "swarm"
-                        ? "border-indigo-500 text-white"
-                        : "border-transparent text-slate-400 hover:text-slate-200"
+                        ? "border-[#6955e8] text-[#292232]"
+                        : "border-transparent text-[#918798] hover:text-[#4c4352]"
                     }`}
                   >
-                    <span>Specialized Agents Swarm</span>
-                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    Specialized Agents Swarm
+                    <span className="h-2 w-2 rounded-full bg-[#6955e8]" />
                   </button>
 
                   <button
                     onClick={() => setActiveTab("policies")}
-                    className={`pb-3 transition border-b-2 ${
+                    className={`shrink-0 border-b-2 pb-3 transition ${
                       activeTab === "policies"
-                        ? "border-indigo-500 text-white"
-                        : "border-transparent text-slate-400 hover:text-slate-200"
+                        ? "border-[#6955e8] text-[#292232]"
+                        : "border-transparent text-[#918798] hover:text-[#4c4352]"
                     }`}
                   >
-                    RAG Knowledge Context ({result.rag_policies?.length || 0})
+                    RAG Knowledge Context (
+                    {result.rag_policies?.length || 0})
                   </button>
+
                 </div>
 
-                {/* TAB 1: OVERVIEW & AUTONOMOUS ACTION */}
-                {activeTab === "overview" && (
-                  <div className="space-y-5">
 
-                    {/* TOP SCORE METRICS */}
-                    <div className="grid md:grid-cols-3 gap-4">
+                {/* ================================================= */}
+                {/* OVERVIEW */}
+                {/* ================================================= */}
+
+                {activeTab === "overview" && (
+                  <div className="min-w-0 space-y-5">
+
+                    {/* METRICS */}
+                    <div className="grid gap-4 md:grid-cols-3">
+
                       {/* RISK SCORE */}
-                      <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5">
-                        <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Risk Score</p>
-                        <div className="flex items-end gap-2 mt-2">
-                          <p className="text-4xl font-bold">{result.risk_score}</p>
-                          <p className="text-slate-500 mb-1 text-sm">/ 100</p>
+                      <div className="rounded-[17px] border border-[#e0d9e1] bg-[#fcfafc] p-5">
+
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#958b99]">
+                          Risk Score
+                        </p>
+
+                        <div className="mt-2 flex items-end gap-2">
+                          <p className="text-4xl font-black text-[#292232]">
+                            {result.risk_score}
+                          </p>
+
+                          <p className="mb-1 text-sm text-[#a39aa7]">
+                            / 100
+                          </p>
                         </div>
-                        <div className="mt-4 h-2 bg-slate-700 rounded-full overflow-hidden">
+
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#e7e2e8]">
                           <div
-                            className={`h-full rounded-full ${
-                              result.risk_score >= 70 ? "bg-red-500" : result.risk_score >= 40 ? "bg-yellow-500" : "bg-green-500"
+                            className={`h-full rounded-full transition-all ${
+                              result.risk_score >= 70
+                                ? "bg-[#ef4d59]"
+                                : result.risk_score >= 40
+                                ? "bg-[#eab21b]"
+                                : "bg-[#16bd68]"
                             }`}
-                            style={{ width: `${result.risk_score}%` }}
+                            style={{
+                              width: `${result.risk_score}%`,
+                            }}
                           />
                         </div>
+
                       </div>
 
-                      {/* AUTONOMOUS ACTION EXECUTED */}
-                      <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5">
-                        <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Executed Action</p>
-                        <p className="text-lg font-bold text-indigo-400 mt-2">
-                          {result.action_executed?.action || "ORDER_APPROVED"}
+
+                      {/* ACTION */}
+                      <div className="rounded-[17px] border border-[#e0d9e1] bg-[#fcfafc] p-5">
+
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#958b99]">
+                          Executed Action
                         </p>
-                        <p className="text-xs text-slate-400 mt-2 font-mono">
-                          Tool: `{result.action_executed?.tool}`
+
+                        <p className="mt-2 break-words text-lg font-black text-[#6955e8]">
+                          {result.action_executed?.action ||
+                            "ORDER_APPROVED"}
                         </p>
+
+                        <p className="mt-2 break-all font-mono text-xs text-[#958b99]">
+                          Tool: {result.action_executed?.tool}
+                        </p>
+
                       </div>
 
-                      {/* CRITIC AUDIT VERDICT */}
-                      <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5">
-                        <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">Critic Safety Review</p>
-                        <p className="text-lg font-bold text-green-400 mt-2 flex items-center gap-1.5">
+
+                      {/* CRITIC */}
+                      <div className="rounded-[17px] border border-[#bde8d0] bg-[#f7fdf9] p-5">
+
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#82988b]">
+                          Critic Safety Review
+                        </p>
+
+                        <p className="mt-2 flex items-center gap-1.5 break-words text-lg font-black text-[#0ca75b]">
                           ✓ {result.critic_review?.verdict}
                         </p>
-                        <p className="text-xs text-slate-400 mt-2">
+
+                        <p className="mt-2 text-xs text-[#83918a]">
                           {result.critic_review?.compliance_rating}
                         </p>
+
                       </div>
+
                     </div>
 
-                    {/* DECISION RATIONALE */}
-                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-semibold text-sm text-slate-200">
+
+                    {/* DECISION */}
+                    <div className="rounded-[17px] border border-[#e0d9e1] bg-[#fcfafc] p-5">
+
+                      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+                        <h3 className="text-sm font-black text-[#292232]">
                           Decision Lead Agent Rationale
-                        </h4>
-                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
-                          Confidence: {result.decision?.confidence_score}%
+                        </h3>
+
+                        <span className="w-fit rounded-md bg-[#eeeaff] px-2 py-1 font-mono text-[10px] font-bold text-[#6955e8]">
+                          Confidence:{" "}
+                          {result.decision?.confidence_score}%
                         </span>
+
                       </div>
-                      <p className="text-slate-300 text-sm leading-relaxed">
+
+                      <p className="break-words text-sm leading-6 text-[#706676]">
                         {result.decision?.rationale}
                       </p>
+
                     </div>
 
-                    {/* KEY RISK FACTORS */}
-                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5">
-                      <h4 className="font-semibold text-sm text-slate-200 mb-3">
+
+                    {/* RISK FACTORS */}
+                    <div className="rounded-[17px] border border-[#e0d9e1] bg-[#fcfafc] p-5">
+
+                      <h3 className="mb-3 text-sm font-black text-[#292232]">
                         Model Risk Factors Identified
-                      </h4>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        {result.ml_insights?.risk_factors?.map((factor: string, idx: number) => (
-                          <div
-                            key={idx}
-                            className="p-3 rounded-lg border border-slate-700/70 bg-slate-900/50 flex items-start gap-2 text-xs text-slate-300"
-                          >
-                            <span className="text-amber-400 font-bold">•</span>
-                            <span>{factor}</span>
-                          </div>
-                        ))}
+                      </h3>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+
+                        {result.ml_insights?.risk_factors?.map(
+                          (factor: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className="flex min-w-0 items-start gap-2 rounded-xl border border-[#e2dce3] bg-white p-3 text-xs leading-5 text-[#706676]"
+                            >
+                              <span className="font-bold text-[#eab21b]">
+                                •
+                              </span>
+
+                              <span className="break-words">
+                                {factor}
+                              </span>
+                            </div>
+                          )
+                        )}
+
                       </div>
+
                     </div>
 
-                    {/* DETERMINISTIC TOOL DISPATCH LOG */}
-                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-semibold text-sm text-slate-200">
+
+                    {/* TOOL OUTPUT */}
+                    <div className="rounded-[17px] border border-[#e0d9e1] bg-[#fcfafc] p-5">
+
+                      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+                        <h3 className="text-sm font-black text-[#292232]">
                           Deterministic Tool Execution Output
-                        </h4>
-                        <span className="text-xs text-green-400 font-mono">STATUS: {result.action_executed?.status}</span>
+                        </h3>
+
+                        <span className="font-mono text-[10px] font-bold text-[#0ca75b]">
+                          STATUS:{" "}
+                          {result.action_executed?.status}
+                        </span>
+
                       </div>
-                      <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto">
-                        <pre>{JSON.stringify(result.action_executed, null, 2)}</pre>
+
+                      <div className="max-h-[400px] overflow-auto rounded-xl bg-[#281f2f] p-4 text-xs text-[#eee8f0]">
+
+                        <pre className="whitespace-pre-wrap break-words font-mono">
+                          {JSON.stringify(
+                            result.action_executed,
+                            null,
+                            2
+                          )}
+                        </pre>
+
                       </div>
+
                     </div>
 
                   </div>
                 )}
 
-                {/* TAB 2: SPECIALIZED AGENT SWARM CARDS */}
+
+                {/* ================================================= */}
+                {/* SWARM */}
+                {/* ================================================= */}
+
                 {activeTab === "swarm" && (
                   <div className="space-y-4">
 
                     {/* CUSTOMER AGENT */}
-                    <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-5">
-                      <div className="flex justify-between items-center mb-3">
+                    <div className="rounded-[17px] border border-[#ddd6e2] bg-[#fcfafc] p-5">
+
+                      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
                         <div>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-500">
                             Agent 1
                           </span>
-                          <h4 className="font-bold text-base text-white mt-1">
-                            {result.customer_analysis?.agent}
-                          </h4>
-                          <p className="text-xs text-slate-400">{result.customer_analysis?.role}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-slate-400">Trust Score</p>
-                          <p className="text-xl font-bold text-blue-400">{result.customer_analysis?.trust_score}/100</p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed mt-2 bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
-                        {result.customer_analysis?.summary}
-                      </p>
-                      <div className="flex gap-4 mt-3 text-xs text-slate-400">
-                        <span>Classification: <strong className="text-slate-200">{result.customer_analysis?.customer_tier}</strong></span>
-                        <span>Friction Strategy: <strong className="text-slate-200">{result.customer_analysis?.friction_recommendation}</strong></span>
-                      </div>
-                    </div>
 
-                    {/* PRODUCT & SALES AGENT */}
-                    <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-5">
-                      <div className="flex justify-between items-center mb-3">
-                        <div>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 font-semibold">
-                            Agent 2
-                          </span>
-                          <h4 className="font-bold text-base text-white mt-1">
-                            {result.product_analysis?.agent}
-                          </h4>
-                          <p className="text-xs text-slate-400">{result.product_analysis?.role}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-slate-400">Category Risk</p>
-                          <p className={`text-xl font-bold ${result.product_analysis?.category_risk_level === "HIGH" ? "text-red-400" : "text-green-400"}`}>
-                            {result.product_analysis?.category_risk_level}
+                          <h3 className="mt-2 text-base font-black text-[#292232]">
+                            {result.customer_analysis?.agent}
+                          </h3>
+
+                          <p className="text-xs text-[#928898]">
+                            {result.customer_analysis?.role}
                           </p>
                         </div>
+
+                        <div className="sm:text-right">
+                          <p className="text-[10px] uppercase tracking-wider text-[#918798]">
+                            Trust Score
+                          </p>
+
+                          <p className="text-xl font-black text-blue-500">
+                            {result.customer_analysis?.trust_score}/100
+                          </p>
+                        </div>
+
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed mt-2 bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+
+                      <p className="rounded-xl border border-[#e3dde4] bg-white p-3 text-sm leading-6 text-[#706676]">
+                        {result.customer_analysis?.summary}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#918798]">
+                        <span>
+                          Classification:{" "}
+                          <strong className="text-[#393140]">
+                            {result.customer_analysis?.customer_tier}
+                          </strong>
+                        </span>
+
+                        <span>
+                          Friction Strategy:{" "}
+                          <strong className="text-[#393140]">
+                            {
+                              result.customer_analysis
+                                ?.friction_recommendation
+                            }
+                          </strong>
+                        </span>
+                      </div>
+
+                    </div>
+
+
+                    {/* PRODUCT AGENT */}
+                    <div className="rounded-[17px] border border-[#ddd6e2] bg-[#fcfafc] p-5">
+
+                      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                        <div>
+                          <span className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[10px] font-black text-purple-500">
+                            Agent 2
+                          </span>
+
+                          <h3 className="mt-2 text-base font-black text-[#292232]">
+                            {result.product_analysis?.agent}
+                          </h3>
+
+                          <p className="text-xs text-[#928898]">
+                            {result.product_analysis?.role}
+                          </p>
+                        </div>
+
+                        <div className="sm:text-right">
+                          <p className="text-[10px] uppercase tracking-wider text-[#918798]">
+                            Category Risk
+                          </p>
+
+                          <p
+                            className={`text-xl font-black ${
+                              result.product_analysis
+                                ?.category_risk_level === "HIGH"
+                                ? "text-red-500"
+                                : "text-green-500"
+                            }`}
+                          >
+                            {
+                              result.product_analysis
+                                ?.category_risk_level
+                            }
+                          </p>
+                        </div>
+
+                      </div>
+
+                      <p className="rounded-xl border border-[#e3dde4] bg-white p-3 text-sm leading-6 text-[#706676]">
                         {result.product_analysis?.summary}
                       </p>
-                      <div className="flex gap-4 mt-3 text-xs text-slate-400">
-                        <span>Category: <strong className="text-slate-200">{result.product_analysis?.product_category}</strong></span>
-                        <span>Logistics Rule: <strong className="text-slate-200">{result.product_analysis?.logistics_recommendation}</strong></span>
+
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#918798]">
+                        <span>
+                          Category:{" "}
+                          <strong className="text-[#393140]">
+                            {
+                              result.product_analysis
+                                ?.product_category
+                            }
+                          </strong>
+                        </span>
+
+                        <span>
+                          Logistics Rule:{" "}
+                          <strong className="text-[#393140]">
+                            {
+                              result.product_analysis
+                                ?.logistics_recommendation
+                            }
+                          </strong>
+                        </span>
                       </div>
+
                     </div>
 
-                    {/* CRITIC AGENT (SELF-CORRECTION) */}
-                    <div className="bg-slate-800/80 border border-emerald-500/30 rounded-xl p-5">
-                      <div className="flex justify-between items-center mb-3">
+
+                    {/* CRITIC */}
+                    <div className="rounded-[17px] border border-[#bce7cf] bg-[#f9fdf9] p-5">
+
+                      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
                         <div>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">
-                            Agent 4 (Supervisor)
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-600">
+                            Agent 4 — Supervisor
                           </span>
-                          <h4 className="font-bold text-base text-white mt-1">
+
+                          <h3 className="mt-2 text-base font-black text-[#292232]">
                             {result.critic_review?.agent}
-                          </h4>
-                          <p className="text-xs text-slate-400">{result.critic_review?.role}</p>
+                          </h3>
+
+                          <p className="text-xs text-[#83918a]">
+                            {result.critic_review?.role}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                            {result.critic_review?.verdict}
-                          </span>
-                        </div>
+
+                        <span className="w-fit rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-600">
+                          {result.critic_review?.verdict}
+                        </span>
+
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed mt-2 bg-slate-900/60 p-3 rounded-lg border border-slate-700/50">
+
+                      <p className="rounded-xl border border-emerald-100 bg-white p-3 text-sm leading-6 text-[#66736b]">
                         {result.critic_review?.audit_note}
                       </p>
-                      <p className="text-xs text-slate-400 mt-3">
-                        Audited Action: <strong className="text-emerald-300">{result.critic_review?.audited_action}</strong> | Policy Safeguard: <strong>Active</strong>
+
+                      <p className="mt-3 text-xs text-[#83918a]">
+                        Audited Action:{" "}
+                        <strong className="text-emerald-600">
+                          {result.critic_review?.audited_action}
+                        </strong>{" "}
+                        | Policy Safeguard:{" "}
+                        <strong>Active</strong>
                       </p>
+
                     </div>
 
-                    {/* WORKFLOW TIMELINE */}
-                    <div className="bg-slate-800/40 border border-slate-800 rounded-xl p-5">
-                      <h4 className="font-semibold text-sm text-slate-300 mb-4">
+
+                    {/* TIMELINE */}
+                    <div className="rounded-[17px] border border-[#ddd6e2] bg-[#fcfafc] p-5">
+
+                      <h3 className="mb-4 text-sm font-black text-[#292232]">
                         Autonomous Execution Graph
-                      </h4>
+                      </h3>
+
                       <div className="space-y-3">
-                        {result.timeline?.map((step: any) => (
-                          <div
-                            key={step.step}
-                            className="flex items-center justify-between p-3 rounded-lg bg-slate-900/70 border border-slate-800 text-xs"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-400 flex items-center justify-center font-bold">
-                                {step.step}
-                              </span>
-                              <div>
-                                <p className="font-semibold text-slate-200">{step.step_name}</p>
-                                <p className="text-slate-500 text-[11px]">{step.output_summary}</p>
+
+                        {result.timeline?.map(
+                          (step: any) => (
+                            <div
+                              key={step.step}
+                              className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-[#e4dee5] bg-white p-3"
+                            >
+
+                              <div className="flex min-w-0 items-center gap-3">
+
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#eeeaff] text-xs font-black text-[#6955e8]">
+                                  {step.step}
+                                </span>
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-black text-[#393140]">
+                                    {step.step_name}
+                                  </p>
+
+                                  <p className="mt-0.5 break-words text-[11px] leading-4 text-[#968c9b]">
+                                    {step.output_summary}
+                                  </p>
+                                </div>
+
                               </div>
+
+                              <span className="shrink-0 font-mono text-[10px] text-[#958b99]">
+                                {step.duration_ms} ms
+                              </span>
+
                             </div>
-                            <span className="font-mono text-slate-400 text-[11px]">{step.duration_ms} ms</span>
-                          </div>
-                        ))}
+                          )
+                        )}
+
                       </div>
+
                     </div>
 
                   </div>
                 )}
 
-                {/* TAB 3: RAG POLICIES */}
+
+                {/* ================================================= */}
+                {/* POLICIES */}
+                {/* ================================================= */}
+
                 {activeTab === "policies" && (
                   <div className="space-y-4">
-                    <p className="text-xs text-slate-400">
-                      Vector-retrieved operational policies governing this transaction:
+
+                    <p className="text-xs leading-5 text-[#8d8393]">
+                      Vector-retrieved operational policies governing
+                      this transaction:
                     </p>
 
-                    {result.rag_policies?.map((policy: any) => (
-                      <div
-                        key={policy.id}
-                        className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-5"
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
-                            {policy.id} • {policy.category}
-                          </span>
-                          <span className="text-xs text-amber-400 font-medium">
-                            Mandate: {policy.action_required}
-                          </span>
+                    {result.rag_policies?.map(
+                      (policy: any) => (
+                        <div
+                          key={policy.id}
+                          className="rounded-[17px] border border-[#ddd6e2] bg-[#fcfafc] p-5"
+                        >
+
+                          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+                            <span className="w-fit rounded-md bg-[#eeeaff] px-2 py-1 font-mono text-[10px] font-black text-[#6955e8]">
+                              {policy.id} • {policy.category}
+                            </span>
+
+                            <span className="text-xs font-bold text-[#d19c00]">
+                              Mandate:{" "}
+                              {policy.action_required}
+                            </span>
+
+                          </div>
+
+                          <h3 className="mb-2 text-sm font-black text-[#292232]">
+                            {policy.title}
+                          </h3>
+
+                          <p className="break-words text-xs leading-5 text-[#706676]">
+                            {policy.text}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-[#e7e1e7] pt-3 text-[10px] text-[#988e9d]">
+                            <span>
+                              Threshold: {policy.threshold}
+                            </span>
+
+                            {policy.relevance_score && (
+                              <span>
+                                Relevance:{" "}
+                                {policy.relevance_score}
+                              </span>
+                            )}
+                          </div>
+
                         </div>
-                        <h4 className="font-semibold text-sm text-white mb-2">
-                          {policy.title}
-                        </h4>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                          {policy.text}
-                        </p>
-                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex justify-between text-[11px] text-slate-500">
-                          <span>Threshold: {policy.threshold}</span>
-                          {policy.relevance_score && (
-                            <span>Relevance: {policy.relevance_score}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    )}
+
                   </div>
                 )}
 
@@ -568,17 +1042,122 @@ function AnalyzeContent() {
 
       </section>
 
+
+      {/* ========================================================= */}
+      {/* ANIMATIONS */}
+      {/* ========================================================= */}
+
+      <style jsx>{`
+        .bubble {
+          position: absolute;
+          border-radius: 9999px;
+          border: 1px solid rgba(130, 75, 220, 0.12);
+          animation: floatBubble 9s ease-in-out infinite;
+        }
+
+        .bubble-pink {
+          width: 165px;
+          height: 165px;
+          left: 7%;
+          top: 105px;
+          background: rgba(245, 184, 217, 0.18);
+          box-shadow: 0 0 50px rgba(238, 150, 205, 0.12);
+        }
+
+        .bubble-purple {
+          width: 130px;
+          height: 130px;
+          left: 27%;
+          top: 220px;
+          background: rgba(176, 137, 245, 0.13);
+          animation-delay: -3s;
+        }
+
+        .bubble-cyan {
+          width: 190px;
+          height: 190px;
+          right: 8%;
+          top: 420px;
+          background: rgba(93, 215, 224, 0.12);
+          border-color: rgba(33, 183, 200, 0.14);
+          animation-delay: -5s;
+        }
+
+        .floating-dot {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 9999px;
+          animation: floatDot 6s ease-in-out infinite;
+        }
+
+        .dot-purple {
+          left: 28%;
+          top: 145px;
+          background: #a94bed;
+        }
+
+        .dot-cyan {
+          right: 30%;
+          top: 345px;
+          background: #25b9d0;
+          animation-delay: -2s;
+        }
+
+        .dot-pink {
+          right: 15%;
+          top: 690px;
+          background: #e98cc5;
+          animation-delay: -4s;
+        }
+
+        @keyframes floatBubble {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+
+          25% {
+            transform: translate3d(15px, -18px, 0) scale(1.025);
+          }
+
+          50% {
+            transform: translate3d(-8px, -30px, 0) scale(0.98);
+          }
+
+          75% {
+            transform: translate3d(-18px, -10px, 0) scale(1.015);
+          }
+        }
+
+        @keyframes floatDot {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0.8;
+          }
+
+          50% {
+            transform: translate3d(12px, -22px, 0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
     </main>
   );
 }
 
+
 export default function Analyze() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#f7f3ec]">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#ddd7e5] border-t-[#6955e8]" />
+        </div>
+      }
+    >
       <AnalyzeContent />
     </Suspense>
   );
