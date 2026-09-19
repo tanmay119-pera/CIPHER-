@@ -41,7 +41,7 @@ export interface SwarmTimelineStep {
   duration_ms: number;
   status: string;
   output_summary: string;
-  details: any;
+  details: unknown;
 }
 
 export interface AnalyzeResult {
@@ -114,7 +114,7 @@ export interface AnalyzeResult {
     status: string;
     details: string;
     timestamp: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   timeline: SwarmTimelineStep[];
 }
@@ -461,7 +461,7 @@ export async function fetchTransactions(
   }
 }
 
-export async function fetchAnalytics(): Promise<any> {
+export async function fetchAnalytics(): Promise<Record<string, unknown> | null> {
   try {
     const res = await fetch(`${API_BASE}/api/analytics`, { cache: "no-store" });
     if (!res.ok) throw new Error("Backend response error");
