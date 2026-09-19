@@ -48,10 +48,18 @@ const POLICIES = [
   },
 ];
 
+interface AnalyzeRequestBody {
+  order_id?: string;
+  amount?: number | string;
+  payment_type?: string;
+  product_category?: string;
+  installments?: number;
+}
+
 export async function POST(req: Request) {
-  let body: any = {};
+  let body: AnalyzeRequestBody = {};
   try {
-    body = await req.json();
+    body = (await req.json()) as AnalyzeRequestBody;
   } catch {
     body = {};
   }
