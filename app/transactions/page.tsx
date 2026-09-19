@@ -24,9 +24,9 @@ export default function TransactionsPage() {
     const savedTheme = localStorage.getItem("cipher-theme");
 
     if (savedTheme === "light") {
-      setDark(false);
+      requestAnimationFrame(() => setDark(false));
     } else {
-      setDark(true);
+      requestAnimationFrame(() => setDark(true));
     }
 
     setThemeLoaded(true);
@@ -37,7 +37,6 @@ export default function TransactionsPage() {
   --------------------------------------------- */
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     fetchTransactions(page, 25, riskFilter, paymentFilter, search)
       .then((res) => {
