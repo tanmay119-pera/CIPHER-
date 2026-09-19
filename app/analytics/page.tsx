@@ -54,8 +54,20 @@ const defaultHighRisk = [
   },
 ];
 
+type RiskDataItem = (typeof defaultRiskData)[number];
+type TrendDataItem = (typeof defaultTrendData)[number];
+type PaymentDataItem = (typeof defaultPaymentData)[number];
+type HighRiskTxItem = (typeof defaultHighRisk)[number];
+
+interface AnalyticsData {
+  risk_data?: RiskDataItem[];
+  trend_data?: TrendDataItem[];
+  payment_data?: PaymentDataItem[];
+  high_risk_transactions?: HighRiskTxItem[];
+}
+
 export default function Analytics() {
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [dark, setDark] = useState(true);
 
   /* ---------------------------------------------
@@ -75,7 +87,9 @@ export default function Analytics() {
      LOAD ANALYTICS
   --------------------------------------------- */
   useEffect(() => {
-    fetchAnalytics().then(setAnalytics).catch(() => {});
+    fetchAnalytics()
+      .then((data) => setAnalytics(data as AnalyticsData | null))
+      .catch(() => {});
   }, []);
 
   /* ---------------------------------------------
@@ -90,11 +104,11 @@ export default function Analytics() {
     );
   };
 
-  const riskData = analytics?.risk_data || defaultRiskData;
-  const trendData = analytics?.trend_data || defaultTrendData;
-  const paymentData =
+  const riskData: RiskDataItem[] = analytics?.risk_data || defaultRiskData;
+  const trendData: TrendDataItem[] = analytics?.trend_data || defaultTrendData;
+  const paymentData: PaymentDataItem[] =
     analytics?.payment_data || defaultPaymentData;
-  const highRiskTransactions =
+  const highRiskTransactions: HighRiskTxItem[] =
     analytics?.high_risk_transactions || defaultHighRisk;
 
   return (
@@ -696,7 +710,7 @@ export default function Analytics() {
             </p>
 
             <div className="mt-7 space-y-6">
-              {riskData.map((risk: any) => (
+              {riskData.map((risk) => (
                 <div key={risk.label}>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="font-bold">
@@ -779,7 +793,7 @@ export default function Analytics() {
             </p>
 
             <div className="mt-7 flex h-56 items-end justify-between gap-3 md:gap-4">
-              {trendData.map((item: any) => (
+              {trendData.map((item) => (
                 <div
                   key={item.day}
                   className="flex h-full flex-1 flex-col items-center justify-end gap-2"
@@ -839,7 +853,7 @@ export default function Analytics() {
             </p>
 
             <div className="space-y-5">
-              {paymentData.map((payment: any) => (
+              {paymentData.map((payment) => (
                 <div key={payment.type}>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="font-bold">
@@ -1129,7 +1143,7 @@ export default function Analytics() {
               </thead>
 
               <tbody>
-                {highRiskTransactions.map((tx: any) => (
+                {highRiskTransactions.map((tx) => (
                   <tr
                     key={tx.id}
                     className={`border-b transition ${
