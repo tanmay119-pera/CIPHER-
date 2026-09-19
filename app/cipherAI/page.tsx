@@ -14,7 +14,7 @@ const INITIAL_GREETING: Message = {
   id: "greeting",
   role: "assistant",
   content:
-    "Greetings! 👋 I am **CIPHER AI**, your autonomous fraud intelligence teammate crafted by **Tanmay & Ritika**.\n\nI monitor transactions in real time, interpret unsupervised Isolation Forest anomaly scores, verify compliance against governing policies (**POL-001** through **POL-008**), and coordinate our multi-agent swarm.\n\nHow can I help you investigate transactions or analyze fraud risk today?",
+    "Hello! 👋 I am **CIPHER AI**. How can I assist you with transaction analysis, risk scores, or fraud policies today?",
   timestamp: "Just now",
 };
 
