@@ -38,7 +38,7 @@ export default function SplashPage() {
     const savedTheme = localStorage.getItem("cipher-theme");
 
     if (savedTheme === "light") {
-      setDark(false);
+      requestAnimationFrame(() => setDark(false));
 
       document.documentElement.setAttribute(
         "data-theme",
@@ -48,7 +48,7 @@ export default function SplashPage() {
       document.documentElement.classList.remove("dark");
     } else {
       // Default = DARK
-      setDark(true);
+      requestAnimationFrame(() => setDark(true));
 
       document.documentElement.setAttribute(
         "data-theme",
