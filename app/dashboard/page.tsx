@@ -68,9 +68,9 @@ export default function DashboardPage() {
     const savedTheme = localStorage.getItem("cipher-theme");
 
     if (savedTheme === "light") {
-      setDark(false);
+      requestAnimationFrame(() => setDark(false));
     } else {
-      setDark(true);
+      requestAnimationFrame(() => setDark(true));
     }
   }, []);
 
