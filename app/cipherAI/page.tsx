@@ -389,7 +389,7 @@ export default function CipherAI() {
           <div className="p-4 border-t border-[#d4af55]/10">
             <div className="flex items-center gap-2 text-[10px] text-[#8e8576]">
               <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.7)]" />
-              <span>CIPHER AI is online (Gemini Active)</span>
+              <span>CIPHER AI is online</span>
             </div>
           </div>
         </aside>
@@ -577,12 +577,11 @@ export default function CipherAI() {
                 </button>
               </form>
 
-              <div className="flex items-center justify-between text-[9px] text-[#6d6556] mt-1.5 px-1">
+              <div className="flex items-center text-[9px] text-[#6d6556] mt-1.5 px-1">
                 <span>
                   Grounding: <strong>POL-001..008</strong> + Isolation Forest
                   Scores
                 </span>
-                <span>Powered by Gemini 3.5 Flash</span>
               </div>
             </div>
           </div>
