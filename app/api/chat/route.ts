@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+interface SqliteStatement {
+  get: (...params: unknown[]) => Record<string, unknown> | undefined;
+}
+
+interface SqliteDatabase {
+  prepare: (sql: string) => SqliteStatement;
+}
+
+function getDatabase(): SqliteDatabase | null {
+  try {
+    const dbPath = path.join(process.cwd(), "backend", "data", "cipher.db");
+    if (!fs.existsSync(dbPath)) return null;
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite");
+    return new DatabaseSync(dbPath, { readOnly: true }) as SqliteDatabase;
+  } catch {
+    return null;
+  }
+}
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -30,42 +50,103 @@ function getGeminiApiKey(): string | null {
   return null;
 }
 
-const SYSTEM_INSTRUCTION = `You are CIPHER AI, the elite autonomous fraud intelligence assistant and AI teammate crafted by Tanmay & Ritika (Team CodeCrashers).
+// Live database reader for cipher.db
+function queryLiveDatabase(query: string): string {
+  try {
+    const db = getDatabase();
+    if (!db) return "";
+    let context = "";
 
-Your purpose:
-You assist fraud analysts, e-commerce managers, and risk engineers by explaining transaction decisions, interpreting anomaly detection models, quoting governing risk policies (POL-001 to POL-008), explaining behavioral signals, and breaking down multi-agent swarm operations.
+    // 1. Check for specific order IDs in the query
+    const words = query.match(/[A-Za-z0-9_-]{10,14}/g) || [];
+    for (const id of words) {
+      if (id.toLowerCase() === "transaction" || id.toLowerCase() === "transactions") continue;
+      const stmt = db.prepare(
+        "SELECT * FROM transactions WHERE order_id = ? COLLATE NOCASE LIMIT 1"
+      );
+      const row = stmt.get(id) as Record<string, unknown> | undefined;
+      if (row) {
+        context += `\n[LIVE DATABASE RECORD for Order ${row.order_id}]:\n` +
+          `- Location: ${row.customer_city}, ${row.customer_state}\n` +
+          `- Payment: $${Number(row.payment_value).toFixed(2)} (${row.payment_type}, ${row.payment_installments} installment(s))\n` +
+          `- Category: ${row.product_category_name}, Price: $${Number(row.price).toFixed(2)}, Freight: $${Number(row.shipping_charges).toFixed(2)}\n` +
+          `- Calibrated Risk Score: ${row.risk_score}/100 (${row.risk_status})\n` +
+          `- Anomaly Score: ${row.anomaly_score}\n` +
+          `- Flags/Reasons: ${row.risk_reasons}\n`;
 
-Key Knowledge & Core Principles:
-1. Creators: You were architected and engineered with love by Tanmay & Ritika for the CIPHER platform.
-2. Swarm Architecture (6 Autonomous Agents):
-   - Policy Knowledge Engine (RAG): Vector-retrieves operational policies.
-   - Isolation Forest & Anomaly Model (ML): Calculates anomaly score and calibrated 0-100 risk score.
-   - Customer Intelligence Agent: Profiles buyer trust (0-100), history, tiers (Tier-1 VIP/Repeat, Tier-2 Standard, Tier-3 New), and velocity.
-   - Sales & Product Intelligence Agent: Analyzes merchant catalog risk, theft categories (electronics, watches, luxury), and freight ratio.
-   - Decision Lead Agent (ReAct): Synthesizes multi-agent signals into decisions: AUTO_APPROVE, TRIGGER_KYC, HOLD_PAYMENT, or REJECT.
-   - Critic & Compliance Agent: Audits decisions against policies with self-correction before tool execution.
-   - Deterministic Tool Executor: Executes gateway actions safely.
-3. Active Policies:
-   - POL-001: High-Value Transaction Identity Verification (Orders > $1,000 or wallet > $800 -> 2FA / KYC).
-   - POL-002: Cross-Border Geolocation & IP Mismatch (Billing vs shipping mismatch flag).
-   - POL-003: High-Risk Merchandise & Category Fraud Protocols (High-theft items > $200 require signature delivery).
-   - POL-004: Rapid Multi-Order Velocity & Installment Abuse (Flag rapid frequency and >6 installments).
-   - POL-005: New Account High-Ticket First Purchase (Tier-3 first-time buyer with orders > $500).
-   - POL-006: Trusted Repeat Buyer VIP Expedite (3+ completed purchases, suppresses false positives up to $1,500).
-   - POL-007: Anomalous Wallet & Boleto Velocity Regulation (Wallet/Boleto > $700 held for 2 hours).
-   - POL-008: Standard Low-Risk Auto-Clear Protocol (Score < 40 auto-approved for fulfillment).
-4. Live Platform Baseline:
-   - Monitored: 89,316 transactions. 68% Low Risk, 24% Medium Risk, 8% High Risk. Average score: 35.3.
-   - Known sample transactions:
-     - DzNM8wrcMGFH: $1,521.75 (Wallet, Score 93, High Risk, Held under POL-001 & POL-007)
-     - BnY63QwP8KjL: $2,145.90 (Credit Card, Score 91, High Risk, Flagged under POL-001)
-     - VjTVGzqe8U6R: $1,014.75 (Credit Card, Score 82, Medium Risk, POL-003 category review)
-     - KpQm72Ld91Xz: $145.50 (Wallet, Score 12, Low Risk, POL-008 auto-cleared)
+        try {
+          const logStmt = db.prepare(
+            "SELECT * FROM agent_audit_logs WHERE order_id = ? COLLATE NOCASE LIMIT 1"
+          );
+          const log = logStmt.get(id) as Record<string, unknown> | undefined;
+          if (log) {
+            context += `- Swarm Decision: ${log.decision}\n- Critic Audit: ${log.critic_review}\n- Tool Action: ${log.action_executed}\n`;
+          }
+        } catch {
+          // ignore log fetch error
+        }
+      }
+    }
 
-Tone & Behavior:
-- Warm, articulate, and welcoming when greeted.
-- Format responses cleanly with bolding, bullet points, and code blocks for policy IDs.
-- Be concise yet thorough. Emphasize how autonomous AI teammates provide zero-hallucination fraud prevention.`;
+    // 2. Aggregate statistics query if user asks for numbers / counts / overview
+    const qLower = query.toLowerCase();
+    if (
+      qLower.includes("how many") ||
+      qLower.includes("stat") ||
+      qLower.includes("total") ||
+      qLower.includes("high risk") ||
+      qLower.includes("overview")
+    ) {
+      const summary = db.prepare(`
+        SELECT 
+          count(*) as total,
+          sum(case when risk_status = 'High Risk' then 1 else 0 end) as high_risk,
+          sum(case when risk_status = 'Medium Risk' then 1 else 0 end) as medium_risk,
+          sum(case when risk_status = 'Low Risk' then 1 else 0 end) as low_risk,
+          round(avg(risk_score), 1) as avg_score,
+          round(avg(payment_value), 2) as avg_amount
+        FROM transactions
+      `).get() as Record<string, unknown>;
+
+      if (summary) {
+        context += `\n[LIVE DATABASE OVERVIEW]:\n` +
+          `- Total Monitored: ${summary.total} transactions\n` +
+          `- Breakdown: ${summary.high_risk} High Risk (8%), ${summary.medium_risk} Medium Risk (24%), ${summary.low_risk} Low Risk (68%)\n` +
+          `- Platform Average Score: ${summary.avg_score}/100, Average Order: $${summary.avg_amount}\n`;
+      }
+    }
+
+    return context;
+  } catch {
+    return "";
+  }
+}
+
+const SYSTEM_INSTRUCTION = `You are CIPHER AI, the autonomous fraud intelligence assistant for the CIPHER platform.
+
+CRITICAL INSTRUCTIONS:
+1. OUTPUT STYLE: Keep ALL responses SHORT, DIRECT, AND CONCISE.
+   - Do NOT give long preambles, disclaimers, or excessive conversational filler.
+   - Jump straight to the answer using clear bullet points or 1-2 tight paragraphs.
+2. CREATOR NAMES:
+   - DO NOT repeat or mention the creator names in greetings or regular answers.
+   - ONLY mention who created you if the user explicitly asks "who created you" or "who made you" (Answer: Tanmay & Ritika).
+3. GREETINGS:
+   - When greeted (e.g. "hey", "hello", "hi"), give a brief, friendly 1-2 sentence response asking how you can help with transaction analysis or risk policies. Do NOT list your entire architecture or features unless asked.
+4. REAL DATABASE ACCESS:
+   - You have live access to the CIPHER database (cipher.db) containing 89,316 transactions and audit logs.
+   - When database context is attached to the user query, cite the exact real numbers, scores, and flags directly.
+5. GOVERNING POLICIES REFERENCE:
+   - POL-001: High-Value Verification (Orders > $1,000 or wallet > $800 -> 2FA/KYC)
+   - POL-002: Cross-Border Geolocation & IP Mismatch
+   - POL-003: High-Risk Merchandise Protocols (Theft items like watches/electronics > $200 require signature delivery)
+   - POL-004: Rapid Multi-Order Velocity & Installment Abuse
+   - POL-005: New Account High-Ticket First Purchase (Orders > $500)
+   - POL-006: Trusted Repeat Buyer VIP Expedite (3+ orders, suppresses false positives up to $1,500)
+   - POL-007: Anomalous Wallet & Boleto Regulation (Wallet/Boleto > $700 held for 2 hours)
+   - POL-008: Standard Low-Risk Auto-Clear (Score < 40 auto-cleared)
+6. SWARM AGENTS:
+   - Policy RAG, Isolation Forest ML, Customer Agent, Product Agent, Decision Lead (ReAct), Critic Auditor.`;
 
 const CANDIDATE_MODELS = [
   "gemini-3.5-flash",
@@ -76,15 +157,22 @@ const CANDIDATE_MODELS = [
 
 async function queryGemini(
   messages: ChatMessage[],
-  apiKey: string
+  apiKey: string,
+  dbContext: string
 ): Promise<string | null> {
-  // Convert chat history to Gemini format
   const contents = messages
     .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+    .map((m, idx, arr) => {
+      let text = m.content;
+      // Append live database context to the latest user prompt
+      if (idx === arr.length - 1 && m.role === "user" && dbContext) {
+        text += `\n\n[System Live Data Context]:${dbContext}`;
+      }
+      return {
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text }],
+      };
+    });
 
   if (contents.length === 0) return null;
 
@@ -97,8 +185,9 @@ async function queryGemini(
           parts: [{ text: SYSTEM_INSTRUCTION }],
         },
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 800,
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       };
 
@@ -106,7 +195,7 @@ async function queryGemini(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(10000),
       });
 
       if (!res.ok) continue;
@@ -127,34 +216,52 @@ async function queryGemini(
   return null;
 }
 
-function generateIntelligentFallback(lastUserMessage: string): string {
+function generateShortFallback(lastUserMessage: string, dbContext: string): string {
   const query = lastUserMessage.toLowerCase();
 
-  if (query.includes("hello") || query.includes("hi") || query.includes("hey") || query.includes("greet")) {
-    return `**Hello!** 👋 I am **CIPHER AI**, your autonomous fraud intelligence teammate crafted by **Tanmay & Ritika**.\n\nI monitor e-commerce transactions in real time, interpret unsupervised Isolation Forest anomaly scores, verify compliance against governing policies (**POL-001** through **POL-008**), and coordinate our multi-agent swarm.\n\nHow can I assist you with fraud risk, transaction analysis, or system policies today?`;
+  // Simple Greeting
+  if (
+    query === "hey" ||
+    query === "hi" ||
+    query === "hello" ||
+    query.startsWith("hey ") ||
+    query.startsWith("hi ") ||
+    query.startsWith("hello ")
+  ) {
+    return "Hello! 👋 How can I assist you with transaction analysis, risk scores, or fraud policies today?";
   }
 
-  if (query.includes("who created") || query.includes("who made") || query.includes("tanmay") || query.includes("ritika")) {
-    return `**CIPHER** was created and engineered by **Tanmay & Ritika** (Team CodeCrashers)! They designed the multi-agent swarm architecture to combine statistical anomaly detection with deterministic compliance policies to provide zero-hallucination e-commerce fraud prevention.`;
+  // Creator explicitly asked
+  if (query.includes("who created") || query.includes("who made you")) {
+    return "CIPHER AI was created by **Tanmay & Ritika** (Team CodeCrashers) as an autonomous fraud intelligence system.";
   }
 
-  if (query.includes("flagged") || query.includes("why was this transaction") || query.includes("dznm8wrcmgfh")) {
-    return `### Transaction Risk Breakdown: \`DzNM8wrcMGFH\`\n\n- **Amount:** $1,521.75 via **Digital Wallet**\n- **Risk Score:** **93/100 (High Risk)**\n- **Isolation Forest Score:** \`+0.0074\` (Significant statistical outlier)\n\n**Primary Reasons Flagged:**\n1. **Unusually High Amount:** Exceeds the standard digital wallet average ($145.00) by over 10x.\n2. **Governing Policy \`POL-001\` Violation:** High-Value Transaction Identity Verification requires secondary authentication (2FA/KYC) on wallet payments above $800.\n3. **Policy \`POL-007\` Action:** Because digital wallet chargebacks cannot be reversed easily, payment clearing is automatically held for 2 hours for fraud graph verification.`;
+  // If live database record is matched
+  if (dbContext && dbContext.includes("[LIVE DATABASE RECORD")) {
+    return `### Database Record\n${dbContext.trim()}`;
   }
 
-  if (query.includes("policy") || query.includes("policies") || query.includes("pol-")) {
-    return `### CIPHER Governing Risk Policies:\n\n- **POL-001**: *High-Value Identity Verification* (Orders > $1,000 or wallet > $800 require 2FA/KYC).\n- **POL-002**: *Cross-Border Geolocation & IP Mismatch* (Checks mismatching origin and delivery jurisdictions).\n- **POL-003**: *High-Risk Merchandise Protocols* (High-theft items like watches and luxury goods > $200 require verified signature delivery).\n- **POL-004**: *Velocity & Installment Regulation* (Detects abnormal order spikes within short timeframes).\n- **POL-005**: *New Account High-Ticket Restriction* (First-time buyers with orders > $500 require identity validation).\n- **POL-006**: *VIP Expedited Fulfillment* (Repeat buyers with 3+ completed orders enjoy false-positive flag suppression up to $1,500).\n- **POL-007**: *Anomalous Wallet & Boleto Regulation* (Wallet/Boleto payments > $700 receive a 2-hour payment hold).\n- **POL-008**: *Low-Risk Auto-Clear Protocol* (Transactions with risk scores < 40 are instantly auto-approved).`;
+  // Why was transaction flagged
+  if (query.includes("flagged") || query.includes("dznm8wrcmgfh")) {
+    return `**Order \`DzNM8wrcMGFH\` Flagged Details:**\n- **Amount:** $1,521.75 via Wallet (Risk Score: **93/100**)\n- **Triggers:** Unusually high wallet value exceeding thresholds.\n- **Governing Policies:** \`POL-001\` (requires 2FA/KYC above $800) and \`POL-007\` (2-hour hold on wallet clearing).`;
   }
 
-  if (query.includes("risk score") || query.includes("explain")) {
-    return `### How CIPHER Computes Risk Scores:\n\nCIPHER uses a calibrated **0 to 100 Risk Score** calculated from multiple layers:\n\n1. **Isolation Forest Model:** Unsupervised machine learning checks multidimensional transaction features (amount, installments, freight ratio, category risk).\n2. **Customer Intelligence:** Weighs buyer trust score (0-100), account age, and order velocity.\n3. **Product Intelligence:** Evaluates catalog risk (e.g. Watches & Electronics have higher baseline theft ratios).\n4. **Critic & Compliance Agent:** Audits the score against POL-001 through POL-008 to produce deterministic actions:\n   - **0 - 39:** *Low Risk* (Auto-Approved)\n   - **40 - 69:** *Medium Risk* (Lightweight 2FA / KYC)\n   - **70 - 100:** *High Risk* (Payment Hold & Fraud Verification)`;
+  // Policies
+  if (query.includes("pol-") || query.includes("policy") || query.includes("policies")) {
+    return `**Key Governing Policies:**\n- \`POL-001\`: High-Value 2FA/KYC (Orders >$1,000 / Wallet >$800)\n- \`POL-003\`: High-Risk Category Signature Delivery (Theft items >$200)\n- \`POL-006\`: VIP Expedite (3+ orders, suppresses false positives up to $1,500)\n- \`POL-007\`: Wallet & Boleto Hold (> $700 held for 2h)\n- \`POL-008\`: Low-Risk Auto-Clear (Risk score < 40)`;
   }
 
-  if (query.includes("anomaly") || query.includes("detect anomalies")) {
-    return `### CIPHER Anomaly Detection Engine:\n\nCIPHER combines **unsupervised machine learning** with **deterministic business rules**:\n\n- **Isolation Forest Algorithm:** Isolates transaction outliers by partitioning multidimensional feature space without requiring labeled fraud data.\n- **Feature Signals Analyzed:** Transaction amount, installment count, product freight-to-price ratio, customer geographic distance, and payment method.\n- **Critic Agent Verification:** When an anomaly is detected, the Critic Agent verifies that the decision complies with active policies, eliminating false positives and hallucinations.`;
+  // Risk Score
+  if (query.includes("risk score") || query.includes("score")) {
+    return `**Risk Score Scale (0-100):**\n- **0–39 (Low Risk):** Auto-approved via \`POL-008\`.\n- **40–69 (Medium Risk):** Lightweight verification/2FA via \`POL-001\`.\n- **70–100 (High Risk):** 2-hour payment hold and audit via \`POL-007\`.`;
   }
 
-  return `I have analyzed your query regarding **"${lastUserMessage}"** within the CIPHER Intelligence framework.\n\nCIPHER operates with 6 autonomous agents (RAG Policy Engine, Isolation Forest ML Model, Customer Intelligence, Sales/Product Analyst, Decision Lead, and Critic Auditor) to monitor 89,316+ transactions with a 99.2% accuracy rate.\n\nWould you like me to inspect a specific transaction ID, explain an active policy (POL-001 to POL-008), or break down how our multi-agent swarm operates?`;
+  // Anomaly Detection
+  if (query.includes("anomaly")) {
+    return `**Anomaly Detection Engine:**\n- Uses unsupervised **Isolation Forest** to partition high-dimensional transaction features (amount, installments, freight ratio, velocity).\n- Decisions are audited against active policies by the Critic Agent to prevent false positives.`;
+  }
+
+  return `I have analyzed your query. Ask about a specific **Order ID** to pull live records from the database, or ask about policies (\`POL-001\` to \`POL-008\`) and anomaly detection.`;
 }
 
 export async function POST(req: Request) {
@@ -167,18 +274,21 @@ export async function POST(req: Request) {
     }
 
     const lastMessage = messages[messages.length - 1];
+
+    // Read real-time database context for the query
+    const dbContext = queryLiveDatabase(lastMessage.content);
     const apiKey = getGeminiApiKey();
 
     if (apiKey) {
-      const geminiReply = await queryGemini(messages, apiKey);
+      const geminiReply = await queryGemini(messages, apiKey, dbContext);
       if (geminiReply) {
         return NextResponse.json({ reply: geminiReply, source: "gemini" });
       }
     }
 
-    // High-fidelity fallback
-    const fallbackReply = generateIntelligentFallback(lastMessage.content);
-    return NextResponse.json({ reply: fallbackReply, source: "cipher-engine" });
+    // High-fidelity short fallback
+    const fallbackReply = generateShortFallback(lastMessage.content, dbContext);
+    return NextResponse.json({ reply: fallbackReply, source: "cipher-db" });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal error";
     return NextResponse.json({ error: message }, { status: 500 });
