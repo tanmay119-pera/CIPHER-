@@ -40,9 +40,9 @@ function AnalyzeContent() {
       });
 
       setResult(res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err?.message || "Failed to complete multi-agent analysis."
+        err instanceof Error ? err.message : "Failed to complete multi-agent analysis."
       );
     } finally {
       setLoading(false);
@@ -933,7 +933,7 @@ function AnalyzeContent() {
                       <div className="space-y-3">
 
                         {result.timeline?.map(
-                          (step: any) => (
+                          (step) => (
                             <div
                               key={step.step}
                               className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-[#e4dee5] bg-white p-3"
@@ -986,7 +986,7 @@ function AnalyzeContent() {
                     </p>
 
                     {result.rag_policies?.map(
-                      (policy: any) => (
+                      (policy) => (
                         <div
                           key={policy.id}
                           className="rounded-[17px] border border-[#ddd6e2] bg-[#fcfafc] p-5"
