@@ -18,38 +18,61 @@ const INITIAL_GREETING: Message = {
   timestamp: "Just now",
 };
 
-const SUGGESTIONS = [
-  "Why was this transaction flagged?",
-  "Explain the risk score",
-  "What policies apply to this transaction?",
-  "How does CIPHER detect anomalies?",
+const SHORTENED_RECOMMENDATIONS = [
+  {
+    icon: "⚡",
+    label: "Why flagged?",
+    query:
+      "Explain why order DzNM8wrcMGFH was marked high risk and what policies were triggered.",
+  },
+  {
+    icon: "📊",
+    label: "Risk score",
+    query: "Explain the risk score calibration (0-100) and risk tiers.",
+  },
+  {
+    icon: "🛡️",
+    label: "Active policies",
+    query:
+      "What governing policies apply to transactions? List POL-001 through POL-008.",
+  },
+  {
+    icon: "🔍",
+    label: "Anomaly detection",
+    query: "How does CIPHER detect anomalies using the Isolation Forest model?",
+  },
 ];
 
 const PRESET_CONVERSATIONS = [
   {
     title: "Transaction risk analysis",
     time: "Today",
-    query: "Explain why order DzNM8wrcMGFH was marked high risk and what policies were triggered.",
+    query:
+      "Explain why order DzNM8wrcMGFH was marked high risk and what policies were triggered.",
   },
   {
     title: "Why was payment held?",
     time: "Today",
-    query: "Why does POL-007 enforce a 2-hour payment clearing hold on wallet transactions?",
+    query:
+      "Why does POL-007 enforce a 2-hour payment clearing hold on wallet transactions?",
   },
   {
     title: "Explain anomaly detection",
     time: "Yesterday",
-    query: "How does the Isolation Forest model compute outlier scores without labeled fraud data?",
+    query:
+      "How does the Isolation Forest model compute outlier scores without labeled fraud data?",
   },
   {
     title: "Customer risk profile",
     time: "Yesterday",
-    query: "How does Customer Intelligence determine customer tiers and trust scores?",
+    query:
+      "How does Customer Intelligence determine customer tiers and trust scores?",
   },
   {
     title: "CIPHER policies",
     time: "Sep 15",
-    query: "List all active governing policies from POL-001 to POL-008 and their thresholds.",
+    query:
+      "List all active governing policies from POL-001 to POL-008 and their thresholds.",
   },
 ];
 
@@ -94,7 +117,9 @@ function FormattedMessage({ content }: { content: string }) {
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
               <span className="text-[#d4af55] mt-1 text-xs">•</span>
-              <span className="flex-1">{renderInlineStyles(trimmed.slice(2))}</span>
+              <span className="flex-1">
+                {renderInlineStyles(trimmed.slice(2))}
+              </span>
             </div>
           );
         }
@@ -120,7 +145,6 @@ function FormattedMessage({ content }: { content: string }) {
 
 // Inline styling parser for **bold**, `code`, and highlighting
 function renderInlineStyles(text: string) {
-  // Regex splitting by bold (**text**) and code (`code`)
   const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
 
   return parts.map((part, index) => {
@@ -152,20 +176,32 @@ function renderInlineStyles(text: string) {
 export default function CipherAI() {
   const [message, setMessage] = useState("");
   const [activeChat, setActiveChat] = useState("New conversation");
-  const [messages, setMessages] = useState<Message[]>([INITIAL_GREETING]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const heroInputRef = useRef<HTMLInputElement>(null);
+  const bottomInputRef = useRef<HTMLInputElement>(null);
+
+  const isThreadStarted = messages.length > 0;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isGenerating]);
+    if (isThreadStarted) {
+      scrollToBottom();
+    }
+  }, [messages, isGenerating, isThreadStarted]);
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // Submit query to AI
   const handleSend = async (queryText?: string) => {
@@ -181,7 +217,11 @@ export default function CipherAI() {
       timestamp: getFormattedTime(),
     };
 
-    const newHistory = [...messages, userMessage];
+    // If starting a fresh thread, prepend initial greeting for context
+    const currentHistory =
+      messages.length === 0 ? [INITIAL_GREETING] : messages;
+    const newHistory = [...currentHistory, userMessage];
+
     setMessages(newHistory);
     setIsGenerating(true);
 
@@ -227,29 +267,21 @@ export default function CipherAI() {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsGenerating(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => bottomInputRef.current?.focus(), 50);
     }
   };
 
   const startNewChat = () => {
-    setMessages([
-      {
-        ...INITIAL_GREETING,
-        id: createMessageId("greeting"),
-        timestamp: getFormattedTime(),
-      },
-    ]);
+    setMessages([]);
     setActiveChat("New conversation");
     setMessage("");
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setTimeout(() => heroInputRef.current?.focus(), 50);
   };
 
   const selectConversation = (conv: (typeof PRESET_CONVERSATIONS)[0]) => {
     setActiveChat(conv.title);
     handleSend(conv.query);
   };
-
-  const isThreadStarted = messages.length > 1;
 
   return (
     <main className="h-screen overflow-hidden bg-[#0d0b0a] text-[#f8f5ee] flex flex-col font-sans">
@@ -280,12 +312,13 @@ export default function CipherAI() {
       ========================================================= */}
       <nav className="relative z-20 h-[82px] shrink-0 border-b border-[#d4af55]/15 bg-[#0d0b0a]/90 backdrop-blur-xl flex items-center justify-between px-6 md:px-10">
         <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="relative w-12 h-12 rounded-2xl bg-[#fffdf8] flex items-center justify-center shadow-[0_0_25px_rgba(212,175,85,0.15)] group-hover:scale-105 transition">
-            <span className="text-[28px] font-black text-[#211827] leading-none">
+          {/* SLEEK CIRCULAR CYBER EMBLEM */}
+          <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-[#241e17] via-[#14100c] to-[#070605] border border-[#d4af55]/40 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,85,0.2)] group-hover:scale-105 group-hover:border-[#d4af55]/70 transition">
+            <span className="text-[22px] font-black text-[#fffdf8] leading-none tracking-tight">
               C
             </span>
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#10b8d8]" />
-            <span className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-[#ed3b91]" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#10b8d8] shadow-[0_0_8px_#10b8d8]" />
+            <span className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#ed3b91] shadow-[0_0_8px_#ed3b91]" />
           </div>
 
           <div>
@@ -399,8 +432,12 @@ export default function CipherAI() {
           {/* HEADER */}
           <div className="px-5 md:px-8 py-3.5 shrink-0 border-b border-[#d4af55]/10 flex items-center justify-between bg-[#0d0b0a]/60 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#d4af55]/10 border border-[#d4af55]/30 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,85,0.12)]">
-                <span className="text-base text-[#d4af55]">✦</span>
+              <div className="relative w-9 h-9 rounded-xl bg-[#d4af55]/10 border border-[#d4af55]/30 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,85,0.12)]">
+                <span className="text-base font-black text-[#d4af55] leading-none">
+                  C
+                </span>
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#10b8d8]" />
+                <span className="absolute bottom-1.5 right-1.5 w-1 h-1 rounded-full bg-[#ed3b91]" />
               </div>
               <div>
                 <p className="font-bold text-sm text-[#f8f5ee] flex items-center gap-2">
@@ -420,171 +457,279 @@ export default function CipherAI() {
 
             <button
               onClick={startNewChat}
-              className="md:hidden text-xs text-[#d4af55] font-semibold border border-[#d4af55]/25 rounded-lg px-2.5 py-1"
+              className="text-xs text-[#d4af55] font-semibold border border-[#d4af55]/25 rounded-lg px-3 py-1.5 hover:bg-[#d4af55]/10 transition flex items-center gap-1 cursor-pointer"
             >
-              + New
+              <span>+</span> New Chat
             </button>
           </div>
 
-          {/* CHAT MESSAGES STREAM */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6 space-y-6 custom-scrollbar">
-            <div className="max-w-3xl mx-auto space-y-6">
-              {/* HERO SPLASH: Show when conversation is still at greeting */}
-              {!isThreadStarted && (
-                <div className="text-center py-6">
-                  <div className="flex justify-center mb-3">
-                    <div className="relative w-16 h-16 rounded-2xl bg-[#fffdf8] flex items-center justify-center shadow-[0_0_45px_rgba(212,175,85,0.2)] animate-[logoFloat_5s_ease-in-out_infinite]">
-                      <span className="text-3xl font-black text-[#211827]">
-                        C
+          {/* =========================================================
+              VIEW 1: INITIAL CENTERED ASKING HERO (EMPTY THREAD)
+          ========================================================= */}
+          {!isThreadStarted ? (
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 md:px-8 py-8 overflow-y-auto custom-scrollbar">
+              <div className="w-full max-w-2xl text-center">
+                {/* CIRCULAR CYBER EMBLEM */}
+                <div className="flex justify-center mb-5">
+                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#2a2219] via-[#16120e] to-[#080706] border-2 border-[#d4af55]/50 flex items-center justify-center shadow-[0_0_35px_rgba(212,175,85,0.25)] animate-[logoFloat_5s_ease-in-out_infinite]">
+                    {/* Outer glowing pulsing ring */}
+                    <div className="absolute -inset-2 rounded-full border border-[#d4af55]/20 animate-pulse pointer-events-none" />
+
+                    <span className="text-4xl font-black text-[#fffdf8] tracking-tight">
+                      C
+                    </span>
+                    <span className="absolute top-3.5 right-3.5 w-2.5 h-2.5 rounded-full bg-[#10b8d8] shadow-[0_0_12px_#10b8d8]" />
+                    <span className="absolute bottom-3.5 right-3.5 w-2 h-2 rounded-full bg-[#ed3b91] shadow-[0_0_10px_#ed3b91]" />
+                  </div>
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#d4af55]/30 bg-[#d4af55]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-[#e5c97b] mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-pulse" />
+                  Intelligence Assistant
+                </div>
+
+                <h2 className="text-3xl md:text-5xl font-black text-[#fffdf8] tracking-tight">
+                  Ask <span className="text-[#d4af55]">CIPHER AI</span>
+                </h2>
+
+                <p className="mt-2 text-xs md:text-sm text-[#a39886] max-w-md mx-auto leading-relaxed">
+                  Real-time conversational explanations for transaction risk,
+                  anomaly detection, and compliance decisions.
+                </p>
+
+                {/* =====================================================
+                    MAIN ASKING BAR IN MIDDLE
+                ===================================================== */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSend();
+                  }}
+                  className="mt-7 w-full"
+                >
+                  <div className="group relative rounded-2xl border border-[#d4af55]/40 bg-[#070605]/95 p-2 shadow-[0_12px_45px_rgba(0,0,0,0.6)] backdrop-blur-xl focus-within:border-[#d4af55]/85 focus-within:shadow-[0_0_35px_rgba(212,175,85,0.25)] transition-all duration-300">
+                    <div className="flex items-center gap-3 px-2">
+                      <span className="text-lg text-[#d4af55]/70 group-focus-within:text-[#d4af55] transition">
+                        ✦
                       </span>
-                      <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#10b8d8]" />
-                      <span className="absolute bottom-2.5 right-2.5 w-2 h-2 rounded-full bg-[#ed3b91]" />
+                      <input
+                        ref={heroInputRef}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Ask CIPHER AI anything about transactions, anomalies, or policies..."
+                        disabled={isGenerating}
+                        autoFocus
+                        className="flex-1 bg-transparent py-2.5 text-sm md:text-base text-[#f8f5ee] placeholder:text-[#6a6357] outline-none disabled:opacity-50"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!message.trim() || isGenerating}
+                        aria-label="Send query to CIPHER AI"
+                        className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-base transition duration-200 ${
+                          message.trim() && !isGenerating
+                            ? "bg-[#d4af55] hover:bg-[#e2c36e] text-[#15120f] shadow-[0_0_20px_rgba(212,175,85,0.4)] cursor-pointer scale-100"
+                            : "bg-[#d4af55]/15 text-[#5e5647] cursor-not-allowed"
+                        }`}
+                      >
+                        ↑
+                      </button>
                     </div>
                   </div>
+                </form>
 
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[#d4af55] font-bold mb-1">
-                    Intelligence Assistant
-                  </p>
-                  <h2 className="text-2xl md:text-4xl font-black text-[#fffdf8]">
-                    Ask <span className="text-[#d4af55]">CIPHER AI</span>
-                  </h2>
-                  <p className="mt-2 text-xs md:text-sm text-[#9c9384] max-w-md mx-auto">
-                    Real-time conversational explanations for transaction risk,
-                    anomaly detection, and compliance decisions.
-                  </p>
-
-                  {/* QUICK SUGGESTIONS GRID */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-6 text-left">
-                    {SUGGESTIONS.map((item) => (
+                {/* =====================================================
+                    SHORTENED RECOMMENDATIONS JUST BELOW ASKING BAR
+                ===================================================== */}
+                <div className="mt-4 w-full">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {SHORTENED_RECOMMENDATIONS.map((item, idx) => (
                       <button
-                        key={item}
+                        key={idx}
                         type="button"
-                        onClick={() => handleSend(item)}
-                        className="group text-left p-3.5 rounded-xl border border-[#d4af55]/15 bg-[#d4af55]/[0.035] hover:bg-[#d4af55]/[0.1] hover:border-[#d4af55]/40 transition cursor-pointer"
+                        onClick={() => handleSend(item.query)}
+                        className="group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#d4af55]/25 bg-[#d4af55]/[0.05] hover:bg-[#d4af55]/[0.15] hover:border-[#d4af55]/50 transition cursor-pointer text-xs text-[#dcd2be] hover:text-white shadow-sm"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#d4af55] text-sm group-hover:translate-x-1 transition font-mono">
-                            →
-                          </span>
-                          <span className="text-xs text-[#d8cfbe] font-medium group-hover:text-white">
-                            {item}
-                          </span>
-                        </div>
+                        <span className="text-xs">{item.icon}</span>
+                        <span className="font-medium tracking-wide">
+                          {item.label}
+                        </span>
+                        <span className="text-[#d4af55] text-[10px] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition">
+                          →
+                        </span>
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
 
-              {/* MESSAGE HISTORY */}
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex gap-3.5 ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {/* AI AVATAR */}
-                  {m.role === "assistant" && (
-                    <div className="w-8 h-8 shrink-0 rounded-xl bg-[#d4af55]/15 border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-sm shadow-[0_0_12px_rgba(212,175,85,0.15)] mt-0.5">
-                      ✦
-                    </div>
-                  )}
-
-                  <div
-                    className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-4 shadow-lg ${
-                      m.role === "user"
-                        ? "bg-[#d4af55]/20 border border-[#d4af55]/40 text-[#fffdf8]"
-                        : "bg-[#14110e]/95 border border-[#d4af55]/20 text-[#eee5d5]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-white/[0.06]">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#9d9382]">
-                        {m.role === "assistant" ? "CIPHER AI Teammate" : "You"}
-                      </span>
-                      <span className="text-[9px] font-mono text-[#71695c]">
-                        {m.timestamp}
-                      </span>
-                    </div>
-
-                    <FormattedMessage content={m.content} />
-                  </div>
-
-                  {/* USER AVATAR */}
-                  {m.role === "user" && (
-                    <div className="w-8 h-8 shrink-0 rounded-xl bg-[#2a241b] border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-xs font-bold mt-0.5">
-                      YOU
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* TYPING INDICATOR */}
-              {isGenerating && (
-                <div className="flex gap-3.5 justify-start">
-                  <div className="w-8 h-8 shrink-0 rounded-xl bg-[#d4af55]/15 border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-sm shadow-[0_0_12px_rgba(212,175,85,0.15)] animate-pulse">
-                    ✦
-                  </div>
-                  <div className="bg-[#14110e]/95 border border-[#d4af55]/25 rounded-2xl px-4 py-3 flex items-center gap-2.5">
-                    <span className="text-xs text-[#a99f8d] font-medium">
-                      CIPHER AI is synthesizing multi-agent reasoning
-                    </span>
-                    <span className="flex gap-1 items-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce" />
+                  {/* GROUNDING FOOTNOTE */}
+                  <div className="flex items-center justify-center gap-2 text-[10px] text-[#6d6556] mt-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55]/60" />
+                    <span>
+                      Grounding:{" "}
+                      <strong className="text-[#a49884]">POL-001..008</strong> +
+                      Isolation Forest Scores
                     </span>
                   </div>
                 </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* =====================================================
-              INPUT BAR
-          ===================================================== */}
-          <div className="px-4 md:px-8 pb-3 pt-2 shrink-0 bg-[#0d0b0a]/90 border-t border-[#d4af55]/15 backdrop-blur-xl">
-            <div className="max-w-3xl mx-auto">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSend();
-                }}
-                className="rounded-2xl border border-[#d4af55]/30 bg-[#070605]/95 p-1.5 flex items-center gap-2 shadow-[0_10px_35px_rgba(0,0,0,0.4)] focus-within:border-[#d4af55]/70 focus-within:ring-1 focus-within:ring-[#d4af55]/40 transition"
-              >
-                <input
-                  ref={inputRef}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask CIPHER AI anything about transactions, anomalies, or policies..."
-                  disabled={isGenerating}
-                  className="flex-1 bg-transparent outline-none px-3 py-2.5 text-sm text-[#f8f5ee] placeholder:text-[#6a6357] disabled:opacity-50"
-                />
-
-                <button
-                  type="submit"
-                  disabled={!message.trim() || isGenerating}
-                  aria-label="Send query to CIPHER AI"
-                  className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-base transition shadow-[0_0_20px_rgba(212,175,85,0.2)] ${
-                    message.trim() && !isGenerating
-                      ? "bg-[#d4af55] hover:bg-[#e2c36e] text-[#15120f] cursor-pointer"
-                      : "bg-[#d4af55]/20 text-[#6d6453] cursor-not-allowed"
-                  }`}
-                >
-                  ↑
-                </button>
-              </form>
-
-              <div className="flex items-center text-[9px] text-[#6d6556] mt-1.5 px-1">
-                <span>
-                  Grounding: <strong>POL-001..008</strong> + Isolation Forest
-                  Scores
-                </span>
               </div>
             </div>
-          </div>
+          ) : (
+            /* =========================================================
+                VIEW 2: ACTIVE CONVERSATION STREAM
+            ========================================================= */
+            <>
+              {/* CHAT MESSAGES STREAM */}
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6 space-y-6 custom-scrollbar">
+                <div className="max-w-3xl mx-auto space-y-6">
+                  {/* MESSAGE HISTORY */}
+                  {messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`flex gap-3.5 ${
+                        m.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      {/* AI AVATAR */}
+                      {m.role === "assistant" && (
+                        <div className="relative w-8 h-8 shrink-0 rounded-xl bg-[#d4af55]/15 border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-xs font-black shadow-[0_0_12px_rgba(212,175,85,0.15)] mt-0.5">
+                          C
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#10b8d8]" />
+                          <span className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-[#ed3b91]" />
+                        </div>
+                      )}
+
+                      <div
+                        className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-4 shadow-lg ${
+                          m.role === "user"
+                            ? "bg-[#d4af55]/20 border border-[#d4af55]/40 text-[#fffdf8]"
+                            : "bg-[#14110e]/95 border border-[#d4af55]/20 text-[#eee5d5]"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-white/[0.06]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#9d9382]">
+                            {m.role === "assistant"
+                              ? "CIPHER AI Teammate"
+                              : "You"}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {m.role === "assistant" && (
+                              <button
+                                onClick={() => handleCopy(m.id, m.content)}
+                                className="text-[10px] text-[#9d9382] hover:text-[#d4af55] transition flex items-center gap-1 cursor-pointer"
+                                title="Copy message"
+                              >
+                                {copiedId === m.id ? (
+                                  <span className="text-green-400 font-semibold">
+                                    ✓ Copied
+                                  </span>
+                                ) : (
+                                  <span>📋 Copy</span>
+                                )}
+                              </button>
+                            )}
+                            <span className="text-[9px] font-mono text-[#71695c]">
+                              {m.timestamp}
+                            </span>
+                          </div>
+                        </div>
+
+                        <FormattedMessage content={m.content} />
+                      </div>
+
+                      {/* USER AVATAR */}
+                      {m.role === "user" && (
+                        <div className="w-8 h-8 shrink-0 rounded-xl bg-[#2a241b] border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-xs font-bold mt-0.5">
+                          YOU
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* TYPING INDICATOR */}
+                  {isGenerating && (
+                    <div className="flex gap-3.5 justify-start">
+                      <div className="relative w-8 h-8 shrink-0 rounded-xl bg-[#d4af55]/15 border border-[#d4af55]/30 flex items-center justify-center text-[#d4af55] text-xs font-black shadow-[0_0_12px_rgba(212,175,85,0.15)] animate-pulse">
+                        C
+                        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#10b8d8]" />
+                        <span className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-[#ed3b91]" />
+                      </div>
+                      <div className="bg-[#14110e]/95 border border-[#d4af55]/25 rounded-2xl px-4 py-3 flex items-center gap-2.5">
+                        <span className="text-xs text-[#a99f8d] font-medium">
+                          CIPHER AI is synthesizing multi-agent reasoning
+                        </span>
+                        <span className="flex gap-1 items-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce [animation-delay:-0.3s]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce [animation-delay:-0.15s]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55] animate-bounce" />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+
+              {/* DOCKED BOTTOM INPUT BAR */}
+              <div className="px-4 md:px-8 pb-3 pt-2 shrink-0 bg-[#0d0b0a]/90 border-t border-[#d4af55]/15 backdrop-blur-xl">
+                <div className="max-w-3xl mx-auto">
+                  {/* COMPACT SHORT RECOMMENDATIONS QUICK BAR */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none mb-1">
+                    <span className="text-[10px] text-[#71695c] uppercase font-bold shrink-0">
+                      Shortcuts:
+                    </span>
+                    {SHORTENED_RECOMMENDATIONS.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSend(item.query)}
+                        disabled={isGenerating}
+                        className="shrink-0 text-[11px] px-2.5 py-0.5 rounded-full border border-[#d4af55]/20 bg-[#d4af55]/[0.04] hover:bg-[#d4af55]/[0.12] text-[#c9bfae] hover:text-white transition cursor-pointer"
+                      >
+                        {item.icon} {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSend();
+                    }}
+                    className="rounded-2xl border border-[#d4af55]/30 bg-[#070605]/95 p-1.5 flex items-center gap-2 shadow-[0_10px_35px_rgba(0,0,0,0.4)] focus-within:border-[#d4af55]/70 focus-within:ring-1 focus-within:ring-[#d4af55]/40 transition"
+                  >
+                    <input
+                      ref={bottomInputRef}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Ask CIPHER AI anything about transactions, anomalies, or policies..."
+                      disabled={isGenerating}
+                      className="flex-1 bg-transparent outline-none px-3 py-2.5 text-sm text-[#f8f5ee] placeholder:text-[#6a6357] disabled:opacity-50"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={!message.trim() || isGenerating}
+                      aria-label="Send query to CIPHER AI"
+                      className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-base transition shadow-[0_0_20px_rgba(212,175,85,0.2)] ${
+                        message.trim() && !isGenerating
+                          ? "bg-[#d4af55] hover:bg-[#e2c36e] text-[#15120f] cursor-pointer"
+                          : "bg-[#d4af55]/20 text-[#6d6453] cursor-not-allowed"
+                      }`}
+                    >
+                      ↑
+                    </button>
+                  </form>
+
+                  <div className="flex items-center text-[9px] text-[#6d6556] mt-1.5 px-1">
+                    <span>
+                      Grounding: <strong>POL-001..008</strong> + Isolation
+                      Forest Scores
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -683,6 +828,14 @@ export default function CipherAI() {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: rgba(212, 175, 85, 0.2);
           border-radius: 9999px;
+        }
+
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </main>
