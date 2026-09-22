@@ -76,12 +76,22 @@ async function startBackend() {
 // Start Next.js Frontend
 function startFrontend() {
   console.log("✓ Starting Next.js development server...");
-  const nextBin = path.join(rootDir, "node_modules", ".bin", "next");
+
+  const nextBin = path.join(
+    rootDir,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "next.cmd" : "next"
+  );
 
   frontendProcess = spawn(
-    process.execPath,
-    [nextBin, "dev"],
-    { cwd: rootDir, stdio: "inherit" }
+    nextBin,
+    ["dev"],
+    {
+      cwd: rootDir,
+      stdio: "inherit",
+      shell: process.platform === "win32",
+    }
   );
 
   frontendProcess.on("exit", (code) => {
