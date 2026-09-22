@@ -446,12 +446,6 @@ export default function CipherAI() {
                     AUTONOMOUS SWARM
                   </span>
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[10px] text-[#9c9384]">
-                    Trained on Policies POL-001..008 & Isolation Forest
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -491,11 +485,6 @@ export default function CipherAI() {
                 <h2 className="text-3xl md:text-5xl font-black text-[#fffdf8] tracking-tight">
                   Ask <span className="text-[#d4af55]">CIPHER AI</span>
                 </h2>
-
-                <p className="mt-2 text-xs md:text-sm text-[#a39886] max-w-md mx-auto leading-relaxed">
-                  Real-time conversational explanations for transaction risk,
-                  anomaly detection, and compliance decisions.
-                </p>
 
                 {/* =====================================================
                     MAIN ASKING BAR IN MIDDLE
@@ -558,16 +547,6 @@ export default function CipherAI() {
                         </span>
                       </button>
                     ))}
-                  </div>
-
-                  {/* GROUNDING FOOTNOTE */}
-                  <div className="flex items-center justify-center gap-2 text-[10px] text-[#6d6556] mt-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#d4af55]/60" />
-                    <span>
-                      Grounding:{" "}
-                      <strong className="text-[#a49884]">POL-001..008</strong> +
-                      Isolation Forest Scores
-                    </span>
                   </div>
                 </div>
               </div>
@@ -719,13 +698,6 @@ export default function CipherAI() {
                       ↑
                     </button>
                   </form>
-
-                  <div className="flex items-center text-[9px] text-[#6d6556] mt-1.5 px-1">
-                    <span>
-                      Grounding: <strong>POL-001..008</strong> + Isolation
-                      Forest Scores
-                    </span>
-                  </div>
                 </div>
               </div>
             </>
