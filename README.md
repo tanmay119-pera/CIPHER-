@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CIPHER — Autonomous AI Teammates for E-Commerce Fraud & Operations
 
-## Getting Started
+CIPHER is an autonomous AI teammate swarm and real-time transaction intelligence platform designed for e-commerce fraud defense, operational risk triage, and regulatory compliance.
 
-First, run the development server:
+Powered by a Next.js frontend, a FastAPI multi-agent swarm backend, a hybrid BM25/TF-IDF RAG policy engine, and scikit-learn anomaly detection over 89,000+ transaction records.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## System Architecture
+
+```text
+┌────────────────────────────────────────────────────────┐
+│                   CIPHER Web UI (Next.js)              │
+│   • /dashboard       • /cipherAI       • /transactions │
+│   • /analytics       • /analyze                        │
+└──────────────────────────┬─────────────────────────────┘
+                           │ HTTP / JSON
+┌──────────────────────────▼─────────────────────────────┐
+│                 Python FastAPI AI Backend              │
+│   • Multi-Agent Swarm (Customer, Sales, Decision, etc) │
+│   • RAG Policy Engine (POL-001 through POL-008)       │
+│   • Calibrated ML Isolation Forest Anomaly Scoring     │
+│   • SQLite Database (89k+ Transactions & Relations)    │
+└────────────────────────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Node.js**: v18.0 or higher (v20+ recommended)
+- **Python**: v3.10 or higher
+- **Git**: Installed on your system
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Quick Start (macOS & Linux)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. Clone & Install Frontend Dependencies
+```bash
+git clone https://github.com/tanmay119-pera/CIPHER-.git
+cd CIPHER-
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Set Up Python Backend Virtual Environment
+```bash
+cd backend
+python3 -m venv .venv
+./.venv/bin/pip install -r requirements.txt
+cd ..
+```
 
-## Deploy on Vercel
+### 3. Launch Both Backend & Frontend
+You can launch everything with a single command:
+```bash
+chmod +x start.sh
+./start.sh
+```
+*Or alternatively:*
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The web application will open automatically at **[http://localhost:3000](http://localhost:3000)**, and the AI backend will be active at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Quick Start (Windows)
+
+### 1. Clone & Install Frontend Dependencies
+Open **Command Prompt (CMD)** or **PowerShell**:
+```cmd
+git clone https://github.com/tanmay119-pera/CIPHER-.git
+cd CIPHER-
+npm install
+```
+
+### 2. Set Up Python Backend Virtual Environment
+```cmd
+cd backend
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+cd ..
+```
+
+### 3. Launch Both Backend & Frontend
+Run the dedicated Windows launcher:
+```cmd
+start.bat
+```
+*Or alternatively:*
+```cmd
+npm run dev
+```
+
+The script will launch the FastAPI backend in its own terminal and run the Next.js development server at **[http://localhost:3000](http://localhost:3000)**.
+
+---
+
+## Resolving Git Pull Conflicts Across Windows & Mac
+
+If your Windows environment had old tracked `.pyc` files prior to this update, run the following command once in your repository to clean local untracked cache:
+
+```cmd
+git clean -fd
+git pull origin main
+```
+
+Our repository now includes `.gitattributes` to automatically handle `LF` and `CRLF` line endings across both operating systems and `.gitignore` to prevent any Python bytecode collisions.
+
+---
+
+## Application Routes
+
+- **Command Center**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
+- **CIPHER AI Chat**: [http://localhost:3000/cipherAI](http://localhost:3000/cipherAI)
+- **Transactions Stream**: [http://localhost:3000/transactions](http://localhost:3000/transactions)
+- **Analytics & Trends**: [http://localhost:3000/analytics](http://localhost:3000/analytics)
+- **Autonomous Deep Dive**: [http://localhost:3000/analyze](http://localhost:3000/analyze)
