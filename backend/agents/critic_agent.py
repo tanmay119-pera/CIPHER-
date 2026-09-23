@@ -58,7 +58,7 @@ class CriticAgent:
             f"Verdict: {verdict}. "
             f"Provide a 1-sentence rigorous audit statement verifying policy compliance and customer protection."
         )
-        llm_note = call_gemini(prompt, timeout=3)
+        llm_note = call_gemini(prompt, timeout=10)
         audit_note = llm_note if llm_note else default_note
 
         return {
@@ -71,7 +71,7 @@ class CriticAgent:
             "recommendations": recommendations,
             "audit_note": audit_note,
             "compliance_rating": "100% COMPLIANT" if passed else "NON_COMPLIANT_FLAGGED",
-            "powered_by": "Gemini 3.8 Flash" if llm_note else "Deterministic Swarm Heuristic"
+            "powered_by": "Gemini AI" if llm_note else "Deterministic Swarm Heuristic"
         }
 
 critic_agent = CriticAgent()
