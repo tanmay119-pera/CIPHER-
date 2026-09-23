@@ -43,6 +43,38 @@ function openBrowser(url) {
   }
 }
 
+// Load environment variables from .env.local, .env, or backend/.env
+function loadEnv() {
+  const env = { ...process.env };
+  const envFiles = [
+    path.join(rootDir, ".env"),
+    path.join(rootDir, ".env.local"),
+    path.join(rootDir, "backend", ".env"),
+  ];
+
+  for (const envFile of envFiles) {
+    if (fs.existsSync(envFile)) {
+      try {
+        const content = fs.readFileSync(envFile, "utf-8");
+        for (const line of content.split("\n")) {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+            const idx = trimmed.indexOf("=");
+            const key = trimmed.slice(0, idx).trim();
+            const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            if (key && val) {
+              env[key] = val;
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return env;
+}
+
 // Start Python FastAPI Backend if not already running
 async function startBackend() {
   const active = await isPortInUse(8000);
@@ -69,7 +101,7 @@ async function startBackend() {
   backendProcess = spawn(
     pythonCmd,
     ["-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
-    { cwd: rootDir, stdio: "inherit", shell: isWin }
+    { cwd: rootDir, stdio: "inherit", shell: isWin, env: loadEnv() }
   );
 
   backendProcess.on("error", (err) => {
