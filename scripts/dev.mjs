@@ -51,14 +51,25 @@ async function startBackend() {
     return;
   }
 
-  const venvPython = path.join(rootDir, "backend", ".venv", "bin", "python");
-  const pythonCmd = fs.existsSync(venvPython) ? venvPython : "python3";
+  const isWin = process.platform === "win32";
+  const venvPythonWin = path.join(rootDir, "backend", ".venv", "Scripts", "python.exe");
+  const venvPythonPosix = path.join(rootDir, "backend", ".venv", "bin", "python");
+
+  let pythonCmd;
+  if (fs.existsSync(venvPythonWin)) {
+    pythonCmd = venvPythonWin;
+  } else if (fs.existsSync(venvPythonPosix)) {
+    pythonCmd = venvPythonPosix;
+  } else {
+    // On Windows, the default command is 'python' or 'py'; on Unix it's 'python3'
+    pythonCmd = isWin ? "python" : "python3";
+  }
 
   console.log("🚀 Starting Python FastAPI AI Backend & Multi-Agent Swarm...");
   backendProcess = spawn(
     pythonCmd,
     ["-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
-    { cwd: rootDir, stdio: "inherit" }
+    { cwd: rootDir, stdio: "inherit", shell: isWin }
   );
 
   backendProcess.on("error", (err) => {
@@ -77,22 +88,36 @@ async function startBackend() {
 function startFrontend() {
   console.log("✓ Starting Next.js development server...");
 
+  const isWin = process.platform === "win32";
   const nextBin = path.join(
     rootDir,
     "node_modules",
     ".bin",
-    process.platform === "win32" ? "next.cmd" : "next"
+    isWin ? "next.cmd" : "next"
   );
 
-  frontendProcess = spawn(
-    nextBin,
-    ["dev"],
-    {
-      cwd: rootDir,
-      stdio: "inherit",
-      shell: process.platform === "win32",
-    }
-  );
+  if (fs.existsSync(nextBin)) {
+    frontendProcess = spawn(
+      nextBin,
+      ["dev"],
+      {
+        cwd: rootDir,
+        stdio: "inherit",
+        shell: isWin,
+      }
+    );
+  } else {
+    // Cross-platform fallback to npx
+    frontendProcess = spawn(
+      isWin ? "npx.cmd" : "npx",
+      ["next", "dev"],
+      {
+        cwd: rootDir,
+        stdio: "inherit",
+        shell: isWin,
+      }
+    );
+  }
 
   frontendProcess.on("exit", (code) => {
     cleanup();
