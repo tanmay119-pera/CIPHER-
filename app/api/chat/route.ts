@@ -27,27 +27,57 @@ interface ChatMessage {
   content: string;
 }
 
-function getGeminiApiKey(): string | null {
-  if (process.env.GEMINI_API_KEY) {
-    return process.env.GEMINI_API_KEY.trim();
+function getGeminiApiKey(explicitKey?: string): string | null {
+  if (explicitKey && explicitKey.trim()) {
+    return explicitKey.trim().replace(/^["']|["']$/g, "");
   }
 
-  // Check backend/.env
-  try {
-    const envPath = path.join(process.cwd(), "backend", ".env");
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf-8");
-      for (const line of content.split("\n")) {
-        if (line.startsWith("GEMINI_API_KEY=")) {
-          return line.replace("GEMINI_API_KEY=", "").trim();
+  const envVars = [
+    process.env.GEMINI_API_KEY,
+    process.env.GOOGLE_API_KEY,
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+  ];
+  for (const v of envVars) {
+    if (v && v.trim()) {
+      return v.trim().replace(/^["']|["']$/g, "");
+    }
+  }
+
+  // Check candidate .env files across project
+  const candidateFiles = [
+    path.join(process.cwd(), ".env.local"),
+    path.join(process.cwd(), ".env"),
+    path.join(process.cwd(), "backend", ".env"),
+  ];
+
+  for (const filePath of candidateFiles) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, "utf-8");
+        for (const line of content.split("\n")) {
+          const trimmed = line.trim();
+          for (const prefix of ["GEMINI_API_KEY=", "GOOGLE_API_KEY=", "NEXT_PUBLIC_GEMINI_API_KEY="]) {
+            if (trimmed.startsWith(prefix)) {
+              const val = trimmed.slice(prefix.length).trim().replace(/^["']|["']$/g, "");
+              if (val) return val;
+            }
+          }
         }
       }
+    } catch {
+      // Ignore read error
     }
-  } catch {
-    // Ignore error
   }
 
   return null;
+}
+
+export async function GET() {
+  const key = getGeminiApiKey();
+  return NextResponse.json({
+    configured: Boolean(key),
+    preview: key ? `${key.slice(0, 4)}...${key.slice(-4)}` : null,
+  });
 }
 
 // Live database reader for cipher.db
@@ -150,8 +180,9 @@ CRITICAL INSTRUCTIONS:
 
 const CANDIDATE_MODELS = [
   "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.6-flash",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
   "gemini-flash-latest",
 ];
 
@@ -187,7 +218,6 @@ async function queryGemini(
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens: 1024,
-          thinkingConfig: { thinkingBudget: 0 },
         },
       };
 
@@ -195,7 +225,7 @@ async function queryGemini(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(12000),
       });
 
       if (!res.ok) continue;
@@ -266,7 +296,7 @@ function generateShortFallback(lastUserMessage: string, dbContext: string): stri
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { messages?: ChatMessage[] };
+    const body = (await req.json()) as { messages?: ChatMessage[]; apiKey?: string };
     const messages = body.messages || [];
 
     if (messages.length === 0) {
@@ -275,9 +305,13 @@ export async function POST(req: Request) {
 
     const lastMessage = messages[messages.length - 1];
 
+    // Check request header or body for explicitly provided API key
+    const headerKey = req.headers.get("x-gemini-key");
+    const explicitKey = headerKey || body.apiKey;
+
     // Read real-time database context for the query
     const dbContext = queryLiveDatabase(lastMessage.content);
-    const apiKey = getGeminiApiKey();
+    const apiKey = getGeminiApiKey(explicitKey);
 
     if (apiKey) {
       const geminiReply = await queryGemini(messages, apiKey, dbContext);
