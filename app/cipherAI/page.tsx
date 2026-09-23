@@ -181,6 +181,12 @@ export default function CipherAI() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
+  const [customKey, setCustomKey] = useState("");
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [isKeyConfigured, setIsKeyConfigured] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [keySavedToast, setKeySavedToast] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
   const bottomInputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +202,43 @@ export default function CipherAI() {
       scrollToBottom();
     }
   }, [messages, isGenerating, isThreadStarted]);
+
+  useEffect(() => {
+    const saved =
+      typeof window !== "undefined"
+        ? localStorage.getItem("cipher_gemini_key") || ""
+        : "";
+    if (saved) {
+      setCustomKey(saved);
+      setKeyInput(saved);
+      setIsKeyConfigured(true);
+    }
+
+    fetch("/api/chat", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.configured || saved) {
+          setIsKeyConfigured(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveKey = () => {
+    const trimmed = keyInput.trim().replace(/^["']|["']$/g, "");
+    if (trimmed) {
+      localStorage.setItem("cipher_gemini_key", trimmed);
+      setCustomKey(trimmed);
+      setIsKeyConfigured(true);
+    } else {
+      localStorage.removeItem("cipher_gemini_key");
+      setCustomKey("");
+      setIsKeyConfigured(false);
+    }
+    setKeySavedToast(true);
+    setTimeout(() => setKeySavedToast(false), 2500);
+    setIsKeyModalOpen(false);
+  };
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -226,14 +269,22 @@ export default function CipherAI() {
     setIsGenerating(true);
 
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (customKey) {
+        headers["x-gemini-key"] = customKey;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           messages: newHistory.map((m) => ({
             role: m.role,
             content: m.content,
           })),
+          apiKey: customKey || undefined,
         }),
       });
 
@@ -449,12 +500,32 @@ export default function CipherAI() {
               </div>
             </div>
 
-            <button
-              onClick={startNewChat}
-              className="text-xs text-[#d4af55] font-semibold border border-[#d4af55]/25 rounded-lg px-3 py-1.5 hover:bg-[#d4af55]/10 transition flex items-center gap-1 cursor-pointer"
-            >
-              <span>+</span> New Chat
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsKeyModalOpen(true)}
+                className="text-xs font-semibold border border-[#d4af55]/25 rounded-lg px-3 py-1.5 hover:bg-[#d4af55]/10 transition flex items-center gap-1.5 cursor-pointer text-[#d4af55]"
+                title="Configure Gemini API Key"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isKeyConfigured
+                      ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
+                      : "bg-amber-400"
+                  }`}
+                />
+                <span className="hidden sm:inline">
+                  {isKeyConfigured ? "Gemini Key Active" : "Set API Key"}
+                </span>
+                <span className="sm:hidden">Key</span>
+              </button>
+
+              <button
+                onClick={startNewChat}
+                className="text-xs text-[#d4af55] font-semibold border border-[#d4af55]/25 rounded-lg px-3 py-1.5 hover:bg-[#d4af55]/10 transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>+</span> New Chat
+              </button>
+            </div>
           </div>
 
           {/* =========================================================
@@ -810,6 +881,113 @@ export default function CipherAI() {
           scrollbar-width: none;
         }
       `}</style>
+
+      {/* API Key Modal */}
+      {isKeyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-2xl border border-[#d4af55]/30 bg-[#161310] p-6 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-[#d4af55]/15">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔑</span>
+                <h3 className="font-bold text-base text-[#f8f5ee]">
+                  Gemini API Key
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsKeyModalOpen(false)}
+                className="text-[#9d9588] hover:text-[#f8f5ee] transition text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#9d9588] mt-3 leading-relaxed">
+              Connect Google Gemini to power live autonomous multi-agent
+              reasoning and real-time conversation. You can get a free key
+              instantly from Google AI Studio.
+            </p>
+
+            <div className="mt-4">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#d4af55] mb-1.5">
+                API Key
+              </label>
+              <input
+                type="password"
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                placeholder="AIzaSy... or AQ.Ab8..."
+                className="w-full rounded-xl border border-[#d4af55]/30 bg-[#0d0b0a] px-3.5 py-2.5 text-sm text-[#eee5d5] placeholder-[#716b61] outline-none focus:border-[#d4af55]"
+              />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-[11px]">
+              <span
+                className={`flex items-center gap-1.5 font-medium ${
+                  isKeyConfigured ? "text-emerald-400" : "text-amber-400"
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isKeyConfigured ? "bg-emerald-400" : "bg-amber-400"
+                  }`}
+                />
+                {isKeyConfigured
+                  ? "Key is active on this browser"
+                  : "Using built-in database fallback"}
+              </span>
+
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#d4af55] hover:underline"
+              >
+                Get Free Key ↗
+              </a>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              {customKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setKeyInput("");
+                    localStorage.removeItem("cipher_gemini_key");
+                    setCustomKey("");
+                    setIsKeyConfigured(false);
+                    setIsKeyModalOpen(false);
+                  }}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                >
+                  Remove Key
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsKeyModalOpen(false)}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#9d9588] hover:bg-white/5 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveKey}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#0d0b0a] bg-gradient-to-r from-[#e4c56f] to-[#d4af55] hover:brightness-110 transition shadow-[0_0_15px_rgba(212,175,85,0.25)] cursor-pointer"
+              >
+                Save & Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {keySavedToast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-emerald-500/40 bg-[#161310] px-4 py-2.5 text-xs font-bold text-emerald-400 shadow-2xl flex items-center gap-2">
+          <span>✓</span>
+          API Key preferences updated!
+        </div>
+      )}
     </main>
   );
 }
