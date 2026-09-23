@@ -31,6 +31,34 @@ Powered by a Next.js frontend, a FastAPI multi-agent swarm backend, a hybrid BM2
 - **Node.js**: v18.0 or higher (v20+ recommended)
 - **Python**: v3.10 or higher
 - **Git**: Installed on your system
+- **Google Gemini API Key** (Free from [Google AI Studio](https://aistudio.google.com/app/apikey))
+
+---
+
+## Gemini API Key Setup
+
+CIPHER utilizes Google Gemini for live multi-agent reasoning, critic review, and conversational explanations. You can configure your key in either of two easy ways:
+
+### Option A: In the Web Interface (Easiest)
+1. Open the app at [http://localhost:3000/cipherAI](http://localhost:3000/cipherAI).
+2. Click the **"Set API Key"** button in the top right.
+3. Paste your Gemini API Key and click **"Save & Apply"**.
+4. The key is securely saved in your browser and used automatically for all requests.
+
+### Option B: Via Environment File
+Create a `.env.local` file in the root project folder (or copy from `.env.example`):
+```bash
+# macOS / Linux
+cp .env.example .env.local
+
+# Windows (CMD)
+copy .env.example .env.local
+```
+Then paste your key:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+*Note: If no API key is configured, CIPHER automatically operates using its built-in deterministic multi-agent heuristics over the 89,316 transaction SQLite database.*
 
 ---
 
