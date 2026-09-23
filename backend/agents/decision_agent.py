@@ -92,7 +92,7 @@ class DecisionAgent:
             f"State the decision rationale clearly."
         )
 
-        llm_rationale = call_gemini(prompt, timeout=3)
+        llm_rationale = call_gemini(prompt, timeout=10)
         rationale = llm_rationale if llm_rationale else default_rationale
 
         if critic_feedback and not llm_rationale:
@@ -107,7 +107,7 @@ class DecisionAgent:
             "confidence_score": confidence,
             "rationale": rationale,
             "governing_policy": governing_policy,
-            "powered_by": "Gemini 3.8 Flash" if llm_rationale else "Deterministic Swarm Heuristic"
+            "powered_by": "Gemini AI" if llm_rationale else "Deterministic Swarm Heuristic"
         }
 
 decision_agent = DecisionAgent()
