@@ -544,7 +544,7 @@ export default function DashboardPage() {
                 }`}
               >
                 Investigate suspicious transactions, ask questions about
-                risk, and let CIPHER's intelligence layer help turn raw
+                risk, and let CIPHER&apos;s intelligence layer help turn raw
                 transaction data into actionable insight.
               </p>
 
